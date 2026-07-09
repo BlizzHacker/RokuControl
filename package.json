@@ -1,0 +1,29 @@
+{
+  "name": "roku-control",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:build:win": "tauri build --target x86_64-pc-windows-msvc",
+    "tauri:build:mac": "tauri build --target x86_64-apple-darwin",
+    "tauri:build:linux": "tauri build --target x86_64-unknown-linux-gnu"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/cli": "^2.11.4",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "vite": "^8.1.1"
+  }
+}
