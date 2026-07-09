@@ -1,16 +1,78 @@
-# React + Vite
+# Roku Control
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+**Cross-platform desktop remote for Roku TVs & devices.**
+Linux · macOS · Windows — one codebase, native binaries.
 
-Currently, two official plugins are available:
+Built with **Tauri** (Rust + React). ~5MB binary. No Electron bloat.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Your Devices
 
-## React Compiler
+| Device | IP | Room |
+|--------|-----|------|
+| Hisense 58" Roku TV | `192.168.0.126` | Wade's Room |
+| onn. 32" Roku TV | `192.168.0.124` | Alyra's Room |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Pre-configured — appear instantly on launch. SSDP auto-discovery finds any additional Rokus.
 
-## Expanding the Oxlint configuration
+## Quick Start
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```bash
+npm install
+npm run tauri:dev      # dev mode with hot reload
+```
+
+## Build
+
+```bash
+npm run tauri:build         # build for current OS
+npm run tauri:build:win     # Windows .msi
+npm run tauri:build:mac     # macOS .dmg
+npm run tauri:build:linux   # Linux .deb + .AppImage
+```
+
+Binaries land in `src-tauri/target/release/bundle/`.
+
+## Windows Store
+
+Submit as a **Win32 desktop app** via [Partner Center](https://partner.microsoft.com/).
+
+**Cost:** $19 one-time individual registration. Free apps = zero ongoing fees.
+
+**Steps:**
+1. Register at https://partner.microsoft.com (need Microsoft account + $19)
+2. Reserve the name "Roku Control"
+3. Build: `npm run tauri:build:win`
+4. Get the `.msi` from `src-tauri/target/release/bundle/msi/`
+5. Package as MSIX using [MSIX Packaging Tool](https://learn.microsoft.com/en-us/windows/msix/packaging-tool/tool-overview) (free from Microsoft Store)
+6. Upload to Partner Center with:
+   - Store listing (name, description, screenshots)
+   - Privacy policy URL (see below)
+   - Age rating questionnaire
+   - Pricing: **Free**
+
+**Privacy policy:** Host at any URL (GitHub Pages is free). See `privacy.txt` for content.
+
+## Privacy
+
+Roku Control does not collect, store, or transmit any personal data. All communication is strictly between the app and Roku devices on your local network. No analytics, no telemetry, no tracking, no internet dependency.
+
+## How It Works
+
+Communicates directly with Roku devices via [External Control Protocol](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md) on port 8060.
+
+- **SSDP multicast** (`239.255.255.250:1900`) for device discovery
+- **HTTP REST** for keypresses, app launching, device queries
+- **Zero internet required** — everything runs on LAN
+
+## Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| Desktop shell | Tauri 2 (Rust) |
+| UI | React 19 + Vite |
+| Networking | reqwest (async HTTP) |
+| Discovery | SSDP multicast (UDP) |
+
+## License
+
+MIT

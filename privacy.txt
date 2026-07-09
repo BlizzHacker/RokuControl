@@ -1,0 +1,19 @@
+Privacy Policy for Roku Control
+
+Last updated: July 2026
+
+Roku Control does not collect, store, share, or transmit any personal information, usage data, or telemetry.
+
+The app communicates exclusively with Roku devices on your local network (LAN) using the Roku External Control Protocol (ECP) on port 8060. No data is sent to any external server. No internet connection is required or used.
+
+The app discovers Roku devices via SSDP multicast on your local network. Device IP addresses and names are stored locally on your device for convenience and are never transmitted elsewhere.
+
+This app:
+- Does NOT collect personal information
+- Does NOT use analytics or crash reporting
+- Does NOT contain advertisements
+- Does NOT require an account or login
+- Does NOT access the internet except to communicate with Roku devices on your LAN
+- Only stores device IP addresses locally for quick reconnection
+
+If you have questions, contact: me@moveweight.com
