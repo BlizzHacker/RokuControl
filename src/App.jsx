@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 
 const PRELOADED = [
@@ -15,15 +15,24 @@ const ICONS = {
 };
 const icon = (n) => { const l=(n||'').toLowerCase(); for(const[k,v]of Object.entries(ICONS)) if(l.includes(k)) return v; return '📱'; };
 
+const INPUTS = [
+  {k:'InputTuner',l:'📡 Antenna'},{k:'InputHDMI1',l:'HDMI 1'},
+  {k:'InputHDMI2',l:'HDMI 2'},{k:'InputHDMI3',l:'HDMI 3'},
+  {k:'InputHDMI4',l:'HDMI 4'},{k:'InputAV1',l:'AV'},
+];
+
 export default function App({ widget = false }) {
   const [devices, setDevices] = useState(PRELOADED);
   const [sel, setSel] = useState(PRELOADED[0]);
   const [apps, setApps] = useState([]);
   const [showApps, setShowApps] = useState(false);
+  const [showInputs, setShowInputs] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [vol, setVol] = useState(30);
   const [err, setErr] = useState('');
   const [text, setText] = useState('');
+  const volRef = useRef(30);
+  const volTimer = useRef(null);
 
   const refresh = async () => {
     setScanning(true); setErr('');
@@ -51,12 +60,34 @@ export default function App({ widget = false }) {
   const send = async (key) => {
     if (!sel) return;
     setErr('');
-    try {
-      await invoke('keypress', { ip: sel.ip, key });
-      if (key === 'VolumeUp') setVol(v => Math.min(100, v+5));
-      if (key === 'VolumeDown') setVol(v => Math.max(0, v-5));
-      if (key === 'VolumeMute') setVol(v => v===0 ? 30 : 0);
-    } catch(e) { setErr(e+''); }
+    try { await invoke('keypress', { ip: sel.ip, key }); } catch(e) { setErr(e+''); }
+  };
+
+  const sendVol = (dir) => {
+    if (!sel) return;
+    const newV = dir === 'up' ? Math.min(100, volRef.current + 3) : Math.max(0, volRef.current - 3);
+    volRef.current = newV;
+    setVol(newV);
+    if (volTimer.current) clearTimeout(volTimer.current);
+    volTimer.current = setTimeout(() => send(dir === 'up' ? 'VolumeUp' : 'VolumeDown'), 20);
+  };
+
+  const handleVolChange = (v) => {
+    const target = Number(v);
+    const prev = volRef.current;
+    volRef.current = target;
+    setVol(target);
+    if (volTimer.current) clearTimeout(volTimer.current);
+    const diff = target - prev;
+    const dir = diff > 0 ? 'VolumeUp' : 'VolumeDown';
+    const steps = Math.abs(Math.round(diff / 3));
+    let i = 0;
+    const step = () => {
+      if (i++ >= steps) return;
+      send(dir);
+      volTimer.current = setTimeout(step, 50);
+    };
+    step();
   };
 
   const launch = async (appId) => {
@@ -67,14 +98,7 @@ export default function App({ widget = false }) {
   const sendText = async () => {
     if (!sel || !text.trim()) return;
     setErr('');
-    try {
-      await invoke('send_text', { ip: sel.ip, text: text.trim() });
-      setText('');
-    } catch(e) { setErr(e+''); }
-  };
-
-  const handleTextKey = (e) => {
-    if (e.key === 'Enter') sendText();
+    try { await invoke('send_text', { ip: sel.ip, text: text.trim() }); setText(''); } catch(e) { setErr(e+''); }
   };
 
   const dpad = [
@@ -107,12 +131,18 @@ export default function App({ widget = false }) {
       )}
 
       <div className="main-content">
-        {err && <div style={{color:'#ef4444',fontSize:11,padding:'2px 8px',background:'rgba(239,68,68,0.1)',borderRadius:6}}>{err}</div>}
+        {err && <div className="error-bar">{err}</div>}
+
+        {/* Power row */}
         <div className="status-line">
           <span style={{color:'var(--text-dim)'}}>{sel?.label || 'No device'}</span>
-          <button className="btn sp" onClick={() => send('PowerOff')}>⏻ Power</button>
+          <div style={{display:'flex',gap:4}}>
+            <button className="btn" onClick={() => send('PowerOn')} title="Wake">⏻ Wake</button>
+            <button className="btn sp" onClick={() => send('PowerOff')} title="Sleep">⏻ Sleep</button>
+          </div>
         </div>
 
+        {/* D-Pad */}
         <div className="dpad">
           {dpad.map((k,i) => (
             <button key={i} className={`dbtn ${k.cl||''}`}
@@ -121,42 +151,62 @@ export default function App({ widget = false }) {
           ))}
         </div>
 
+        {/* Transport: Rewind — PLAY/PAUSE — Fwd — Instant Replay */}
         <div className="row">
-          {[{l:'⏪',k:'Rev'},{l:'⏯️',k:'Play'},{l:'⏩',k:'Fwd'}].map(m => (
-            <button key={m.k} className="btn" onClick={() => send(m.k)}>{m.l}</button>
-          ))}
+          <button className="btn" onClick={() => send('Rev')} title="Rewind">⏪</button>
+          <button className="btn sp" onClick={() => send('Play')} title="Play / Pause" style={{fontSize:16,padding:'12px 28px'}}>⏯</button>
+          <button className="btn" onClick={() => send('Fwd')} title="Fast Forward">⏩</button>
+          <button className="btn" onClick={() => send('InstantReplay')} title="Instant Replay">↺</button>
         </div>
 
+        {/* Navigation */}
         <div className="row">
-          {[{l:'⌂',k:'Home'},{l:'←',k:'Back'},{l:'ℹ',k:'Info'},{l:'🔍',k:'Search'}].map(m => (
-            <button key={m.k} className="btn" onClick={() => send(m.k)}>{m.l}</button>
-          ))}
+          <button className="btn" onClick={() => send('Home')} title="Home">⌂ Home</button>
+          <button className="btn" onClick={() => send('Back')} title="Back">← Back</button>
+          <button className="btn" onClick={() => send('Info')} title="Info">ℹ Info</button>
+          <button className="btn" onClick={() => send('Search')} title="Search">🔍</button>
         </div>
 
+        {/* Volume slider — actually sends commands */}
         <div className="vol-row">
-          <button className="vbtn" onClick={() => send('VolumeDown')}>🔉</button>
-          <input type="range" className="vslider" min="0" max="100" value={vol} onChange={e => setVol(+e.target.value)} />
-          <button className="vbtn" onClick={() => send('VolumeUp')}>🔊</button>
-          <button className="vbtn" onClick={() => send('VolumeMute')}>{vol===0?'🔇':'🔈'}</button>
+          <button className="vbtn" onClick={() => sendVol('down')}>🔉</button>
+          <input type="range" className="vslider" min="0" max="100"
+            value={vol} onChange={e => handleVolChange(e.target.value)} />
+          <button className="vbtn" onClick={() => sendVol('up')}>🔊</button>
+          <button className="vbtn" onClick={() => { send('VolumeMute'); setVol(v => v===0 ? 30 : 0); volRef.current = volRef.current===0 ? 30 : 0; }}>
+            {vol===0?'🔇':'🔈'}
+          </button>
         </div>
 
+        {/* Channel + Inputs */}
+        <div className="row">
+          <button className="btn" onClick={() => send('ChannelUp')}>▲ Ch</button>
+          <button className="btn" onClick={() => send('ChannelDown')}>▼ Ch</button>
+          <button className="btn" onClick={() => setShowInputs(!showInputs)}>🔌 Input</button>
+          <button className="btn" onClick={() => send('FindRemote')} title="Find Remote">🔔 Find</button>
+        </div>
+        {showInputs && (
+          <div className="row">
+            {INPUTS.map(inp => (
+              <button key={inp.k} className="btn" onClick={() => { send(inp.k); setShowInputs(false); }}>{inp.l}</button>
+            ))}
+          </div>
+        )}
+
+        {/* Keyboard input */}
+        {!widget && (
         <div style={{display:'flex',gap:6,width:'100%',marginTop:2}}>
-          <input
-            type="text"
-            value={text}
-            onChange={e => setText(e.target.value)}
-            onKeyDown={handleTextKey}
+          <input type="text" value={text} onChange={e => setText(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') sendText(); }}
             placeholder="Type to search on TV..."
-            style={{
-              flex:1, background:'var(--bg3)', border:'1px solid var(--border)',
-              borderRadius:'var(--radius-sm)', color:'var(--text)', padding:'8px 10px',
-              fontSize:12, outline:'none'
-            }}
-          />
+            style={{flex:1,background:'var(--bg3)',border:'1px solid var(--border)',
+              borderRadius:'var(--radius-sm)',color:'var(--text)',padding:'8px 10px',fontSize:12,outline:'none'}} />
           <button className="btn sp" onClick={sendText} style={{padding:'8px 14px'}}>Send</button>
-          <button className="btn" onClick={() => send('Backspace')} style={{padding:'8px 10px'}} title="Backspace">⌫</button>
+          <button className="btn" onClick={() => send('Backspace')} style={{padding:'8px 10px'}}>⌫</button>
         </div>
+        )}
 
+        {/* App Launcher */}
         {!widget && (
           <>
             <button className="btn sp" style={{padding:'10px 20px',fontSize:13}} onClick={() => { setShowApps(!showApps); if (!showApps && !apps.length) loadApps(sel?.ip); }}>
@@ -175,6 +225,7 @@ export default function App({ widget = false }) {
           </>
         )}
 
+        {/* Branding */}
         <div style={{marginTop:'auto',padding:'10px 0 4px',textAlign:'center'}}>
           <div style={{fontSize:10,color:'var(--text-dim)',opacity:0.5,letterSpacing:'0.5px'}}>
             Brought to you ad-free by
