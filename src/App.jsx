@@ -109,7 +109,7 @@ export default function App({ widget = false }) {
 
   return (
     <div className={widget ? 'widget' : ''}>
-      <div className="titlebar">
+      <div className="titlebar" data-tauri-drag-region>
         <span className="titlebar-text">📺 Roku Control {sel ? `· ${sel.label.split('—')[0].trim()}` : ''}</span>
         <div style={{display:'flex',gap:4}}>
           <button className="tb-btn close" onClick={() => window.close()}>✕</button>
