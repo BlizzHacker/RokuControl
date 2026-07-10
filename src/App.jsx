@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 
 const PRELOADED = [
   { ip: '192.168.0.126', label: "Wade's Room — Hisense 58\"" },
@@ -110,7 +109,7 @@ export default function App({ widget = false }) {
 
   return (
     <div className={widget ? 'widget' : ''}>
-      <div className="titlebar" data-tauri-drag-region onMouseDown={() => getCurrentWindow().startDragging()}>
+      <div className="titlebar">
         <span className="titlebar-text">📺 Roku Control {sel ? `· ${sel.label.split('—')[0].trim()}` : ''}</span>
         <div style={{display:'flex',gap:4}}>
           <button className="tb-btn close" onClick={() => window.close()}>✕</button>

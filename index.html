@@ -32,6 +32,8 @@
       padding: 8px 14px;
       background: linear-gradient(180deg, rgba(139,92,246,0.08) 0%, transparent 100%);
       border-bottom: 1px solid var(--border); flex-shrink: 0;
+      -webkit-app-region: drag;
+      cursor: grab;
     }
     .titlebar-left { display: flex; align-items: center; gap: 8px; }
     .titlebar-icon { font-size: 16px; }
@@ -42,6 +44,7 @@
       background: transparent; color: var(--text-dim); font-size: 13px;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: all 0.15s;
+      -webkit-app-region: no-drag;
     }
     .tb-btn:hover { background: var(--bg3); color: var(--text); }
     .tb-btn.close:hover { background: #ef4444; color: #fff; }
