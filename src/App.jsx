@@ -174,6 +174,18 @@ export default function App({ widget = false }) {
             )}
           </>
         )}
+
+        <div style={{marginTop:'auto',padding:'10px 0 4px',textAlign:'center'}}>
+          <div style={{fontSize:10,color:'var(--text-dim)',opacity:0.5,letterSpacing:'0.5px'}}>
+            Brought to you ad-free by
+          </div>
+          <div style={{fontSize:11,fontWeight:700,color:'var(--purple-glow)',letterSpacing:'1px',marginTop:1}}>
+            MOVEWEIGHT.NET
+          </div>
+          <div style={{fontSize:9,color:'var(--text-dim)',opacity:0.35,marginTop:1,letterSpacing:'0.5px'}}>
+            WE MAKE DOPE SHIT!
+          </div>
+        </div>
       </div>
     </div>
   );
