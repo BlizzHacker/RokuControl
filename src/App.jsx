@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 
 const PRELOADED = [
-  { ip: '192.168.0.126', label: 'Wade\'s Room — Hisense 58"' },
-  { ip: '192.168.0.124', label: 'Alyra\'s Room — onn. 32"' },
+  { ip: '192.168.0.126', label: "Wade's Room — Hisense 58\"" },
+  { ip: '192.168.0.124', label: "Alyra's Room — onn. 32\"" },
 ];
 
 const ICONS = {
@@ -16,20 +17,17 @@ const icon = (n) => { const l=(n||'').toLowerCase(); for(const[k,v]of Object.ent
 
 export default function App({ widget = false }) {
   const [devices, setDevices] = useState(PRELOADED);
-  const [sel, setSel] = useState(null);
+  const [sel, setSel] = useState(PRELOADED[0]);
   const [apps, setApps] = useState([]);
   const [showApps, setShowApps] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [vol, setVol] = useState(30);
-  const api = window.__TAURI__?.core?.invoke;
-
-  useEffect(() => { if (!sel && PRELOADED.length) setSel(PRELOADED[0]); }, []);
+  const [err, setErr] = useState('');
 
   const refresh = async () => {
-    if (!api) return;
-    setScanning(true);
+    setScanning(true); setErr('');
     try {
-      const found = await api('discover');
+      const found = await invoke('discover');
       if (found?.length) {
         const merged = [...PRELOADED];
         for (const d of found) {
@@ -38,34 +36,31 @@ export default function App({ widget = false }) {
         }
         setDevices(merged);
         if (!sel) setSel(merged[0]);
-        // Load apps
-        const a = await api('get_apps', { ip: sel?.ip || found[0].ip });
-        if (a?.length) setApps(a);
       }
-    } catch(e) { console.error(e); }
+    } catch(e) { setErr(e+''); }
     setScanning(false);
   };
 
   const loadApps = useCallback(async (ip) => {
-    if (!api) return;
-    try { const a = await api('get_apps', { ip }); if (a?.length) setApps(a); } catch(e) {}
-  }, [api]);
+    try { const a = await invoke('get_apps', { ip }); if (a?.length) setApps(a); } catch(e) {}
+  }, []);
 
   const selectDevice = (d) => { setSel(d); setApps([]); loadApps(d.ip); };
 
   const send = async (key) => {
-    if (!sel || !api) return;
+    if (!sel) return;
+    setErr('');
     try {
-      await api('keypress', { ip: sel.ip, key });
+      await invoke('keypress', { ip: sel.ip, key });
       if (key === 'VolumeUp') setVol(v => Math.min(100, v+5));
       if (key === 'VolumeDown') setVol(v => Math.max(0, v-5));
       if (key === 'VolumeMute') setVol(v => v===0 ? 30 : 0);
-    } catch(e) {}
+    } catch(e) { setErr(e+''); }
   };
 
   const launch = async (appId) => {
-    if (!sel || !api) return;
-    try { await api('launch', { ip: sel.ip, appId }); setShowApps(false); } catch(e) {}
+    if (!sel) return;
+    try { await invoke('launch', { ip: sel.ip, appId }); setShowApps(false); } catch(e) { setErr(e+''); }
   };
 
   const dpad = [
@@ -79,8 +74,7 @@ export default function App({ widget = false }) {
       <div className="titlebar">
         <span className="titlebar-text">📺 Roku Control {sel ? `· ${sel.label.split('—')[0].trim()}` : ''}</span>
         <div style={{display:'flex',gap:4}}>
-          {!widget && <button className="tb-btn" onClick={() => {}} title="Widget">🪟</button>}
-          <button className="tb-btn close" onClick={() => {}}>✕</button>
+          <button className="tb-btn close" onClick={() => window.close()}>✕</button>
         </div>
       </div>
 
@@ -99,6 +93,7 @@ export default function App({ widget = false }) {
       )}
 
       <div className="main-content">
+        {err && <div style={{color:'#ef4444',fontSize:11,padding:'2px 8px',background:'rgba(239,68,68,0.1)',borderRadius:6}}>{err}</div>}
         <div className="status-line">
           <span style={{color:'var(--text-dim)'}}>{sel?.label || 'No device'}</span>
           <button className="btn sp" onClick={() => send('PowerOff')}>⏻ Power</button>
