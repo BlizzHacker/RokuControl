@@ -23,6 +23,7 @@ export default function App({ widget = false }) {
   const [scanning, setScanning] = useState(false);
   const [vol, setVol] = useState(30);
   const [err, setErr] = useState('');
+  const [text, setText] = useState('');
 
   const refresh = async () => {
     setScanning(true); setErr('');
@@ -61,6 +62,19 @@ export default function App({ widget = false }) {
   const launch = async (appId) => {
     if (!sel) return;
     try { await invoke('launch', { ip: sel.ip, appId }); setShowApps(false); } catch(e) { setErr(e+''); }
+  };
+
+  const sendText = async () => {
+    if (!sel || !text.trim()) return;
+    setErr('');
+    try {
+      await invoke('send_text', { ip: sel.ip, text: text.trim() });
+      setText('');
+    } catch(e) { setErr(e+''); }
+  };
+
+  const handleTextKey = (e) => {
+    if (e.key === 'Enter') sendText();
   };
 
   const dpad = [
@@ -124,6 +138,23 @@ export default function App({ widget = false }) {
           <input type="range" className="vslider" min="0" max="100" value={vol} onChange={e => setVol(+e.target.value)} />
           <button className="vbtn" onClick={() => send('VolumeUp')}>🔊</button>
           <button className="vbtn" onClick={() => send('VolumeMute')}>{vol===0?'🔇':'🔈'}</button>
+        </div>
+
+        <div style={{display:'flex',gap:6,width:'100%',marginTop:2}}>
+          <input
+            type="text"
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={handleTextKey}
+            placeholder="Type to search on TV..."
+            style={{
+              flex:1, background:'var(--bg3)', border:'1px solid var(--border)',
+              borderRadius:'var(--radius-sm)', color:'var(--text)', padding:'8px 10px',
+              fontSize:12, outline:'none'
+            }}
+          />
+          <button className="btn sp" onClick={sendText} style={{padding:'8px 14px'}}>Send</button>
+          <button className="btn" onClick={() => send('Backspace')} style={{padding:'8px 10px'}} title="Backspace">⌫</button>
         </div>
 
         {!widget && (

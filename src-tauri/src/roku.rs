@@ -184,6 +184,38 @@ pub async fn launch_app(ip: &str, app_id: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Send text input — one character at a time via Lit_ keypresses
+pub async fn send_text(ip: &str, text: &str) -> Result<(), String> {
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(3))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    for ch in text.chars() {
+        let key = match ch {
+            ' ' => "Lit_%20".to_string(),
+            '\n' | '\r' => "Enter".to_string(),
+            c if c.is_alphanumeric() => format!("Lit_{}", c),
+            c => format!("Lit_{}", urlencoding(c)),
+        };
+        let url = format!("http://{}:{}/keypress/{}", ip, ROKU_PORT, key);
+        client.post(&url).send().await.map_err(|e| e.to_string())?;
+        // Small delay between keystrokes
+        tokio::time::sleep(Duration::from_millis(40)).await;
+    }
+    Ok(())
+}
+
+fn urlencoding(c: char) -> String {
+    let mut buf = [0u8; 4];
+    let s = c.encode_utf8(&mut buf);
+    let mut result = String::new();
+    for byte in s.bytes() {
+        result.push_str(&format!("%{:02X}", byte));
+    }
+    result
+}
+
 fn extract_xml(xml: &str, tag: &str) -> String {
     let open = format!("<{}>", tag);
     let close = format!("</{}>", tag);

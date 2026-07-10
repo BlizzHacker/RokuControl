@@ -32,6 +32,11 @@ async fn launch(ip: String, app_id: String) -> Result<(), String> {
     roku::launch_app(&ip, &app_id).await
 }
 
+#[tauri::command]
+async fn send_text(ip: String, text: String) -> Result<(), String> {
+    roku::send_text(&ip, &text).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -45,6 +50,7 @@ pub fn run() {
             get_apps,
             keypress,
             launch,
+            send_text,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Roku Control");
