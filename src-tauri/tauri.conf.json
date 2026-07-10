@@ -21,26 +21,8 @@
         "decorations": false,
         "transparent": true,
         "center": true
-      },
-      {
-        "label": "widget",
-        "title": "Roku Widget",
-        "width": 260,
-        "height": 400,
-        "resizable": false,
-        "decorations": false,
-        "transparent": true,
-        "alwaysOnTop": true,
-        "skipTaskbar": true,
-        "visible": false,
-        "url": "/#/widget"
       }
     ],
-    "trayIcon": {
-      "iconPath": "icons/icon.png",
-      "tooltip": "Roku Control",
-      "menuOnLeftClick": false
-    },
     "security": {
       "csp": "default-src 'self'; connect-src ipc: http://192.168.*:* http://10.*:* http://172.16.*:*; style-src 'self' 'unsafe-inline'"
     }

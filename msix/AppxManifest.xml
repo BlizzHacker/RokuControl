@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <Identity Name="MOVEWEIGHT.RokuControl" Version="2.0.0.0" Publisher="CN=6375D74B-5E4F-45B4-B246-B29507C1332A" ProcessorArchitecture="x64" />
+  <Properties>
+    <DisplayName>Roku Control</DisplayName>
+    <PublisherDisplayName>MOVE WEIGHT</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Applications>
+    <Application Id="RokuControl" Executable="roku-control.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="Roku Control" Description="Control any Roku TV on your network" 
+        BackgroundColor="#1a0a2e" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" />
+    </Application>
+  </Applications>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <Capability Name="internetClient" />
+    <Capability Name="privateNetworkClientServer" />
+  </Capabilities>
+</Package>

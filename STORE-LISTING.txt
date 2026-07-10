@@ -1,0 +1,70 @@
+=== COPY EVERYTHING BELOW INTO YOUR STORE LISTING ===
+
+--- DESCRIPTION ---
+
+Control any Roku TV or device on your local network with this beautiful, free desktop remote. No ads, no tracking, no internet required.
+
+FULL REMOTE CONTROL
+• D-pad with directional arrows and OK/Select button
+• Play/Pause, Rewind, Fast Forward, and Instant Replay
+• Volume slider, Mute, Channel Up/Down
+• HDMI input switcher — HDMI 1-4, Antenna, AV
+• Home, Back, Info, and Search buttons
+• Wake and Sleep power buttons
+• Find My Remote — triggers your physical remote to beep
+
+APP LAUNCHER
+Browse and launch all your installed channels — Netflix, YouTube, Plex, Disney+, Hulu, Prime Video, HBO Max, Spotify, and more. One click to switch apps.
+
+KEYBOARD INPUT
+Type directly into search fields on your TV. Perfect for searching movies on Plex, YouTube, Netflix, or any Roku app.
+
+MULTI-DEVICE SUPPORT
+Control every Roku in your home. Switch between TVs with a single click. Auto-discovers Roku devices on your network via SSDP — no manual setup needed.
+
+WIDGET MODE
+Always-on-top floating mini remote. Keep it hovering over your other windows for quick access.
+
+DARK THEME
+Beautiful purple-accented dark UI designed for desktop. Frameless window with drag-to-move.
+
+PRIVATE & OFFLINE
+No accounts, no analytics, no tracking. Communicates directly with your Roku devices over your local network. Zero internet dependency.
+
+--- FEATURES (short list) ---
+
+• Full D-pad remote control
+• Play/Pause, Rewind, Fast Forward
+• Volume slider with mute
+• HDMI input switcher
+• App launcher with channel icons
+• Keyboard text input for search
+• Instant Replay and Find My Remote
+• Wake and sleep power controls
+• Multi-device support with auto-discovery
+• Widget mode — always-on-top mini remote
+• Dark theme with custom window frame
+• 100% offline — no internet needed
+
+--- KEYWORDS ---
+
+roku remote, roku control, tv remote, roku tv, hisense remote, onn remote, roku app, desktop remote, streaming remote, roku controller, plex remote, smart tv remote, roku widget
+
+--- CATEGORY ---
+
+Utilities & tools > Remote & control
+
+--- PRIVACY POLICY URL ---
+
+https://gist.github.com/BlizzHacker/f71942af06897dabd2ba582863977f8e
+
+--- PRICE ---
+
+Free
+
+--- SCREENSHOTS (need 1366x768 PNG, 3 minimum) ---
+
+Take these with Win+Shift+S while the app is open:
+1. Main remote with D-pad and all buttons visible
+2. App launcher grid open showing channel icons
+3. Widget mode floating over the desktop

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { exit } from '@tauri-apps/plugin-process';
 
 const PRELOADED = [
   { ip: '192.168.0.126', label: "Wade's Room — Hisense 58\"" },
@@ -112,7 +113,7 @@ export default function App({ widget = false }) {
       <div className="titlebar">
         <span className="titlebar-text">📺 Roku Control {sel ? `· ${sel.label.split('—')[0].trim()}` : ''}</span>
         <div style={{display:'flex',gap:4}}>
-          <button className="tb-btn close" onClick={() => window.close()}>✕</button>
+          <button className="tb-btn close" onClick={() => exit(0)}>✕</button>
         </div>
       </div>
 
