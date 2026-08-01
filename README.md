@@ -1,8 +1,5 @@
 # Roku Control
 
-A project of the [Move Weight Foundation](https://foundation.moveweight.com), an
-Oklahoma non-profit corporation with 501(c)(3) status pending.
-
 A desktop remote for Roku TVs and streaming devices. Every button on the
 physical remote, plus channel launching and instant device switching, in a
 native window on Linux, macOS or Windows — one Tauri (Rust + React) codebase,
