@@ -3,71 +3,50 @@
 A project of the [Move Weight Foundation](https://foundation.moveweight.com), an
 Oklahoma non-profit corporation with 501(c)(3) status pending.
 
-**Cross-platform desktop remote for Roku TVs & devices.**
-Linux · macOS · Windows — one codebase, native binaries.
+A desktop remote for Roku TVs and streaming devices. Every button on the
+physical remote, plus channel launching and instant device switching, in a
+native window on Linux, macOS or Windows — one Tauri (Rust + React) codebase,
+a binary around 5 MB.
 
-Built with **Tauri** (Rust + React). ~5MB binary. No Electron bloat.
+Your Rokus are found automatically: the app sends an SSDP discovery broadcast
+on launch and lists every Roku that answers, and you can add one by IP if your
+network blocks multicast. Everything happens on your LAN — the app never
+touches the internet.
 
-## Your Devices
+## Get it
 
-| Device | IP | Room |
-|--------|-----|------|
-| Hisense 58" Roku TV | `192.168.0.126` | Wade's Room |
-| onn. 32" Roku TV | `192.168.0.124` | Alyra's Room |
-
-Pre-configured — appear instantly on launch. SSDP auto-discovery finds any additional Rokus.
-
-## Quick Start
+- **Microsoft Store** — search for *Roku Control* (Windows).
+- **From source** — any OS:
 
 ```bash
+git clone https://github.com/BlizzHacker/RokuControl.git
+cd RokuControl
 npm install
-npm run tauri:dev      # dev mode with hot reload
+npm run tauri:dev
 ```
 
-## Build
+That's a live dev build with hot reload. To produce a real installer:
 
 ```bash
-npm run tauri:build         # build for current OS
+npm run tauri:build         # current OS
 npm run tauri:build:win     # Windows .msi
 npm run tauri:build:mac     # macOS .dmg
 npm run tauri:build:linux   # Linux .deb + .AppImage
 ```
 
-Binaries land in `src-tauri/target/release/bundle/`.
+Installers land in `src-tauri/target/release/bundle/`.
 
-## Windows Store
+> Build through `npm run tauri:build`, not `cargo build` directly — the Tauri
+> script builds the web frontend first. A bare cargo build packages an empty
+> frontend and you get a blank window that looks like a broken app.
 
-Submit as a **Win32 desktop app** via [Partner Center](https://partner.microsoft.com/).
+## How it works
 
-**Cost:** $19 one-time individual registration. Free apps = zero ongoing fees.
-
-**Steps:**
-1. Register at https://partner.microsoft.com (need Microsoft account + $19)
-2. Reserve the name "Roku Control"
-3. Build: `npm run tauri:build:win`
-4. Get the `.msi` from `src-tauri/target/release/bundle/msi/`
-5. Package as MSIX using [MSIX Packaging Tool](https://learn.microsoft.com/en-us/windows/msix/packaging-tool/tool-overview) (free from Microsoft Store)
-6. Upload to Partner Center with:
-   - Store listing (name, description, screenshots)
-   - Privacy policy URL (see below)
-   - Age rating questionnaire
-   - Pricing: **Free**
-
-**Privacy policy:** Host at any URL (GitHub Pages is free). See `privacy.txt` for content.
-
-## Privacy
-
-Roku Control does not collect, store, or transmit any personal data. All communication is strictly between the app and Roku devices on your local network. No analytics, no telemetry, no tracking, no internet dependency.
-
-## How It Works
-
-Communicates directly with Roku devices via [External Control Protocol](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md) on port 8060.
-
-- **SSDP multicast** (`239.255.255.250:1900`) for device discovery
-- **HTTP REST** for keypresses, app launching, device queries
-- **Zero internet required** — everything runs on LAN
-
-## Tech Stack
+Roku devices expose the
+[External Control Protocol](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md)
+on port 8060: plain HTTP for keypresses, app launching and device queries. The
+app discovers devices with an SSDP multicast query (`239.255.255.250:1900`) and
+then talks straight to each Roku.
 
 | Layer | Tech |
 |-------|------|
@@ -76,6 +55,12 @@ Communicates directly with Roku devices via [External Control Protocol](https://
 | Networking | reqwest (async HTTP) |
 | Discovery | SSDP multicast (UDP) |
 
+## Privacy
+
+Roku Control does not collect, store, or transmit any personal data. All
+communication is strictly between the app and Roku devices on your local
+network. No analytics, no telemetry, no tracking, no internet dependency.
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
