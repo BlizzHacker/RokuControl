@@ -1,0 +1,91 @@
+# yaml-language-server: $schema=https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
+language: en-US
+tone_instructions: >-
+  Be direct; skip praise and preamble. This is a desktop app controlling Roku
+  devices over the LAN. Prioritize device-discovery correctness, honest
+  connection state, and build completeness over style.
+early_access: false
+enable_free_tier: true
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: true
+  estimate_code_review_effort: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: false
+  suggested_reviewers: false
+  in_progress_fortune: false
+  poem: false
+  enable_prompt_for_ai_agents: true
+  abort_on_close: true
+
+  slop_detection:
+    enabled: true
+    label: slop
+
+  path_filters:
+    - "!**/*.min.js"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/node_modules/**"
+    - "!**/*.lock"
+    - "!**/vendor/**"
+    - "!**/__pycache__/**"
+
+  path_instructions:
+    - path: "**/*"
+      instructions: >-
+        Device addresses on a home LAN are assigned by DHCP and change. Flag any
+        code path that persists a device address and then reuses it without
+        re-resolving or re-discovering, because that strands the user on a stale
+        address with no in-app way to recover.
+
+        Connection state shown to the user must reflect a real, recent check. An
+        indicator that reports connected based on a cached value, a past success,
+        or merely a reachable subnet is worse than showing nothing, and is a
+        known complaint about this app.
+
+        The frontend must actually be built and bundled into the release
+        artifact. A release build that succeeds while shipping an empty or stale
+        frontend is a silent failure; flag build or packaging changes that could
+        produce it.
+    - path: ".github/workflows/**"
+      instructions: >-
+        Check for unpinned third-party actions, secrets exposed to
+        pull_request_target, and steps interpolating untrusted PR text into run
+        blocks.
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    ignore_usernames:
+      - dependabot
+      - dependabot[bot]
+
+  tools:
+    eslint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    clippy:
+      enabled: true
+    languagetool:
+      enabled: false
+
+chat:
+  art: false
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
