@@ -1,0 +1,42 @@
+name: Report a problem
+description: Something in Roku Control doesn't work the way it should.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time — every report makes the app better for everyone.
+
+        **Only volume works?** That's your Roku's *Limited* mode. On the Roku open
+        **Settings › System › Advanced system settings › Control by mobile apps** and choose **Enabled**.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you try, what did you expect, and what happened instead?
+      placeholder: I pressed Home and the app said "Can't reach the Roku"…
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Roku Control
+        2. Pick my living room TV
+        3. …
+  - type: textarea
+    id: environment
+    attributes:
+      label: Your setup
+      description: >-
+        Filled in for you when you use "Report a problem" in the app. It lists your Roku's model and
+        software version — never its IP address, name or serial number.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown at the bottom of the app.
+      placeholder: "2.1.0"
