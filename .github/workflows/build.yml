@@ -1,9 +1,19 @@
 name: Build installers
 
-# Runs by hand from the Actions tab, on a version tag (v2.1.0), or on a pull
+# Runs by hand from the Actions tab (optionally publishing a release and
+# submitting to the Microsoft Store), on a version tag (v2.1.0), or on a pull
 # request labelled "build-installers" (a downloadable preview for testing).
 on:
   workflow_dispatch:
+    inputs:
+      release:
+        description: Publish a GitHub release with this tag (e.g. v2.1.0). Leave empty to only build.
+        required: false
+        default: ''
+      store:
+        description: Also submit the MSIX to the Microsoft Store (needs the PARTNER_CENTER_* secrets)
+        type: boolean
+        default: false
   push:
     tags: ['v*']
   pull_request:
@@ -84,13 +94,14 @@ jobs:
             src-tauri/target/release/bundle/appimage/*.AppImage
 
   # Publish the installers as a GitHub release, so there is a direct download
-  # link. Tags with a suffix (v2.1.0-beta.1) publish a pre-release; plain
+  # link. A release asked for from the Actions tab is published right away;
+  # pushed tags with a suffix (v2.1.0-beta.1) publish a pre-release and plain
   # version tags make a draft to review first; a labelled PR gets a
   # "preview-pr<N>" pre-release that is replaced on every push.
   release:
     name: Publish release
     needs: build
-    if: ${{ !cancelled() && needs.build.result != 'skipped' && (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'pull_request') }}
+    if: ${{ !cancelled() && needs.build.result != 'skipped' && (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'pull_request' || inputs.release != '') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -107,6 +118,7 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_SHA: ${{ github.event.pull_request.head.sha }}
+          INPUT_TAG: ${{ inputs.release }}
         run: |
           mapfile -t files < <(find installers -type f)
           printf 'Attaching: %s\n' "${files[@]}"
@@ -116,9 +128,64 @@ jobs:
             gh release create "$tag" "${files[@]}" --repo "$GITHUB_REPOSITORY" --target "$PR_SHA" --prerelease \
               --title "Preview build — PR #$PR_NUMBER" \
               --notes "Test build of pull request #$PR_NUMBER at $PR_SHA. Not a release. Installers are unsigned, so Windows may show a SmartScreen warning: choose More info → Run anyway."
+          elif [ "$EVENT" = workflow_dispatch ]; then
+            if ! [[ "$INPUT_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+              echo "::error::Release tag must look like v2.1.0 or v2.1.0-beta.1, got '$INPUT_TAG'"
+              exit 1
+            fi
+            kind=--latest
+            case "$INPUT_TAG" in *-*) kind=--prerelease ;; esac
+            gh release create "$INPUT_TAG" "${files[@]}" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "Roku Control $INPUT_TAG" --generate-notes "$kind"
           else
             kind=--draft
             case "$REF_NAME" in *-*) kind=--prerelease ;; esac
             gh release create "$REF_NAME" "${files[@]}" --repo "$GITHUB_REPOSITORY" \
               --title "Roku Control $REF_NAME" --generate-notes "$kind"
           fi
+
+  # Submit the MSIX to the Microsoft Store listing (product 9MTNNGZKJ1WK) with
+  # Microsoft's Store CLI. Needs an Azure AD app linked in Partner Center; its
+  # IDs go in the PARTNER_CENTER_* repository secrets. Certification then
+  # takes Microsoft a few hours to a few days.
+  store:
+    name: Submit to Microsoft Store
+    needs: build
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.store && needs.build.result == 'success' }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: roku-control-Windows
+          path: windows
+
+      - name: Check the Partner Center secrets
+        shell: pwsh
+        env:
+          TENANT_ID: ${{ secrets.PARTNER_CENTER_TENANT_ID }}
+          SELLER_ID: ${{ secrets.PARTNER_CENTER_SELLER_ID }}
+          CLIENT_ID: ${{ secrets.PARTNER_CENTER_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}
+        run: |
+          $missing = 'TENANT_ID', 'SELLER_ID', 'CLIENT_ID', 'CLIENT_SECRET' | Where-Object { -not [Environment]::GetEnvironmentVariable($_) }
+          if ($missing) {
+            Write-Output "::error::Missing repository secrets: $($missing | ForEach-Object { "PARTNER_CENTER_$_" }). See STORE.md."
+            exit 1
+          }
+
+      - uses: microsoft/setup-msstore-cli@v1
+
+      - name: Submit the MSIX
+        shell: pwsh
+        env:
+          TENANT_ID: ${{ secrets.PARTNER_CENTER_TENANT_ID }}
+          SELLER_ID: ${{ secrets.PARTNER_CENTER_SELLER_ID }}
+          CLIENT_ID: ${{ secrets.PARTNER_CENTER_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}
+        run: |
+          $msix = Get-ChildItem windows -Recurse -Filter *.msix | Select-Object -First 1
+          if (-not $msix) { throw 'No .msix in the Windows build' }
+          msstore reconfigure --tenantId $env:TENANT_ID --sellerId $env:SELLER_ID --clientId $env:CLIENT_ID --clientSecret $env:CLIENT_SECRET
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          msstore publish -v -i $msix.FullName -id 9MTNNGZKJ1WK
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -41,7 +41,9 @@ plus keyboard control and power-on.
 - Report a problem / Suggest an idea — opens a pre-filled GitHub issue.
 - MoveWeight.com and source code links in the footer.
 - A one-time invitation to rate the app after ten minutes of use.
-- CI (Linux + Windows) and a workflow that builds installers for all three OSes.
+- CI (Linux + Windows) and a workflow that builds installers for all three OSes,
+  packs the Microsoft Store MSIX, publishes GitHub releases and can submit to
+  the Store.
 
 ### Removed
 - The volume slider. Rokus can't report their volume, so the slider only ever

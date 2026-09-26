@@ -12,8 +12,8 @@ own network.
 ## Get it
 
 - **Microsoft Store** — search for *Roku Control* (Windows).
-- **Installers** — every tagged release is built for Windows, macOS and Linux
-  by the *Build installers* workflow (Actions tab → latest run → Artifacts).
+- **Installers** — Windows, macOS and Linux downloads are on the
+  [latest release](https://github.com/BlizzHacker/RokuControl/releases/latest).
 - **From source** — any OS:
 
 ```bash
