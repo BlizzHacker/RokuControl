@@ -1,0 +1,26 @@
+name: Suggest an idea
+description: A feature, a button, a shortcut — anything that would make Roku Control better for you.
+title: "[Idea]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Roku Control is free, open source and ad-free. Ideas from people who use it decide what gets built next — thank you!
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you like the app to do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it would help
+      description: What are you trying to do today, and what gets in the way?
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: "2.1.0"
