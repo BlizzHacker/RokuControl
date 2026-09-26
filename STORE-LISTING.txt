@@ -2,53 +2,61 @@
 
 --- DESCRIPTION ---
 
-Control any Roku TV or device on your local network with this beautiful, free desktop remote. No ads, no tracking, no internet required.
+Control any Roku TV or streaming player on your network with this free desktop remote. No ads, no accounts, no tracking — it only ever talks to the Rokus in your home.
 
-FULL REMOTE CONTROL
-• D-pad with directional arrows and OK/Select button
-• Play/Pause, Rewind, Fast Forward, and Instant Replay
-• Volume slider, Mute, Channel Up/Down
-• HDMI input switcher — HDMI 1-4, Antenna, AV
-• Home, Back, Info, and Search buttons
-• Wake and Sleep power buttons
-• Find My Remote — triggers your physical remote to beep
+FINDS YOUR ROKU BY ITSELF
+Open the app and it searches your network — on every adapter, with a direct scan if your router blocks discovery. It remembers each Roku by serial number, so it keeps working when your router gives the TV a new address. Or add one by IP in seconds.
 
-APP LAUNCHER
-Browse and launch all your installed channels — Netflix, YouTube, Plex, Disney+, Hulu, Prime Video, HBO Max, Spotify, and more. One click to switch apps.
+TURN YOUR TV ON FROM STANDBY
+One click sends Power On. If the TV has dropped off the network, the app sends a Wake-on-LAN signal and keeps trying. (For the most reliable wake-up, turn on Fast TV start on your Roku TV — the app shows you how.)
 
-KEYBOARD INPUT
-Type directly into search fields on your TV. Perfect for searching movies on Plex, YouTube, Netflix, or any Roku app.
+YOUR KEYBOARD IS A REMOTE
+Arrow keys move, Enter is OK, Backspace is Back, Space plays and pauses, + and − change the volume. Hold a key to keep scrolling. Press ? to see every shortcut.
 
-MULTI-DEVICE SUPPORT
-Control every Roku in your home. Switch between TVs with a single click. Auto-discovers Roku devices on your network via SSDP — no manual setup needed.
+TYPE STRAIGHT INTO YOUR TV
+Search Netflix, YouTube, Plex or any app by typing on your real keyboard — letters show up on the TV as you type, accents and symbols included.
 
-WIDGET MODE
-Always-on-top floating mini remote. Keep it hovering over your other windows for quick access.
+EVERY BUTTON ON THE REMOTE
+D-pad and OK, Back, Home, Options, Search, Play/Pause, Rewind, Fast Forward, Instant Replay, Volume and Mute, Channel Up/Down, TV inputs by the names you gave them, and Find My Remote.
 
-DARK THEME
-Beautiful purple-accented dark UI designed for desktop. Frameless window with drag-to-move.
+YOUR CHANNELS, ONE CLICK AWAY
+All your channels with their real icons, a quick filter, and what's on now.
 
-PRIVATE & OFFLINE
-No accounts, no analytics, no tracking. Communicates directly with your Roku devices over your local network. Zero internet dependency.
+MINI REMOTE
+A compact remote that stays on top of your other windows.
+
+TELLS YOU WHAT'S WRONG — AND HOW TO FIX IT
+A live status light shows whether your Roku is connected, asleep or unreachable. If your Roku is blocking remote control (Roku's "Limited" mode), the app shows you exactly which setting to change.
+
+FREE, OPEN SOURCE, PRIVATE
+Made ad-free by MoveWeight.com. Report a problem or suggest an idea from inside the app. The source code is on GitHub.
+
+--- WHAT'S NEW (2.1.0) ---
+
+• Finds your Roku automatically when you open the app
+• Fixes "only volume works": the app now spots Roku's Limited mode and shows the setting to change
+• Turn on your TV from standby (Power On + Wake-on-LAN)
+• Full keyboard control and live typing into search boxes
+• Real channel icons, TV inputs by name, mini always-on-top remote
+• Clear messages when something's wrong, and a Help screen
+• Report problems and suggest ideas straight from the app
 
 --- FEATURES (short list) ---
 
-• Full D-pad remote control
-• Play/Pause, Rewind, Fast Forward
-• Volume slider with mute
-• HDMI input switcher
-• App launcher with channel icons
-• Keyboard text input for search
-• Instant Replay and Find My Remote
-• Wake and sleep power controls
-• Multi-device support with auto-discovery
-• Widget mode — always-on-top mini remote
-• Dark theme with custom window frame
-• 100% offline — no internet needed
+• Automatic Roku discovery — follows your TV when its IP changes
+• Turn on from standby (Power On + Wake-on-LAN)
+• Keyboard shortcuts for every button
+• Live typing into search boxes
+• Full D-pad, playback, volume and channel controls
+• TV inputs and channel launcher with real icons
+• Live connection status with fix-it help
+• Mini remote that stays on top
+• Report problems and ideas from the app
+• No ads, no accounts, no tracking — free and open source
 
 --- KEYWORDS ---
 
-roku remote, roku control, tv remote, roku tv, hisense remote, onn remote, roku app, desktop remote, streaming remote, roku controller, plex remote, smart tv remote, roku widget
+roku remote, roku control, tv remote, roku tv, hisense remote, tcl remote, onn remote, roku keyboard, desktop remote, roku controller, plex remote, smart tv remote
 
 --- CATEGORY ---
 
@@ -66,5 +74,6 @@ Free
 
 Take these with Win+Shift+S while the app is open:
 1. Main remote with D-pad and all buttons visible
-2. App launcher grid open showing channel icons
-3. Widget mode floating over the desktop
+2. Channels grid with channel icons and "On now"
+3. Mini remote floating over the desktop
+4. Help screen showing keyboard shortcuts

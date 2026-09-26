@@ -2,7 +2,7 @@
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
-  <Identity Name="MOVEWEIGHT.RokuControl" Version="2.0.0.0" Publisher="CN=6375D74B-5E4F-45B4-B246-B29507C1332A" ProcessorArchitecture="x64" />
+  <Identity Name="MOVEWEIGHT.RokuControl" Version="2.1.0.0" Publisher="CN=6375D74B-5E4F-45B4-B246-B29507C1332A" ProcessorArchitecture="x64" />
   <Properties>
     <DisplayName>Roku Control</DisplayName>
     <PublisherDisplayName>MOVE WEIGHT</PublisherDisplayName>

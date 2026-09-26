@@ -1,19 +1,21 @@
 Privacy Policy for Roku Control
 
-Last updated: July 2026
+Last updated: September 2026
 
-Roku Control does not collect, store, share, or transmit any personal information, usage data, or telemetry.
+Roku Control does not collect, store on any server, share, or transmit any personal information, usage data, or telemetry.
 
-The app communicates exclusively with Roku devices on your local network (LAN) using the Roku External Control Protocol (ECP) on port 8060. No data is sent to any external server. No internet connection is required or used.
+The app communicates exclusively with Roku devices on your local network (LAN) using the Roku External Control Protocol (ECP) on port 8060. It finds them with SSDP multicast and, if that gets no answer, by checking your local subnet for that port. To turn on a TV that is in standby it may send Wake-on-LAN packets, which also stay on your local network. No data is sent to any external server.
 
-The app discovers Roku devices via SSDP multicast on your local network. Device IP addresses and names are stored locally on your device for convenience and are never transmitted elsewhere.
+Stored only on your computer, and never transmitted: the names, IP addresses, models and network hardware (MAC) addresses of your Rokus (so the app can reconnect and wake them), your window preference, and two counters — how long the app has been used and how many commands it has sent — used only to show a one-time invitation to rate the app.
+
+Links in the app (MoveWeight.com, Source code, Report a problem, Suggest an idea, Rate) open your web browser or the Microsoft Store, and only when you click them. "Report a problem" pre-fills a GitHub issue with the app version, your operating system, and your Roku's model, software version and settings mode — never its IP address, name, serial number or MAC address. Nothing is sent unless you choose to submit it on GitHub.
 
 This app:
 - Does NOT collect personal information
 - Does NOT use analytics or crash reporting
 - Does NOT contain advertisements
 - Does NOT require an account or login
-- Does NOT access the internet except to communicate with Roku devices on your LAN
-- Only stores device IP addresses locally for quick reconnection
+- Does NOT access the internet on its own — only Roku devices on your LAN, plus pages you choose to open
+- Only stores device details and usage counters locally, on your computer
 
 If you have questions, contact: me@moveweight.com
