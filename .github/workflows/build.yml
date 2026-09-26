@@ -1,17 +1,25 @@
 name: Build installers
 
-# Run by hand from the Actions tab, or by pushing a version tag (v2.1.0).
+# Runs by hand from the Actions tab, on a version tag (v2.1.0), or on a pull
+# request labelled "build-installers" (a downloadable preview for testing).
 on:
   workflow_dispatch:
   push:
     tags: ['v*']
+  pull_request:
+    types: [labeled, synchronize, reopened]
 
 permissions:
   contents: read
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: ${{ matrix.os }}
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-installers')
     strategy:
       fail-fast: false
       matrix:
@@ -54,13 +62,14 @@ jobs:
             src-tauri/target/release/bundle/rpm/*.rpm
             src-tauri/target/release/bundle/appimage/*.AppImage
 
-  # A version tag also publishes the installers as a GitHub release, so there
-  # is a direct download link. Tags with a suffix (v2.1.0-beta.1) publish a
-  # pre-release right away; plain version tags make a draft to review first.
+  # Publish the installers as a GitHub release, so there is a direct download
+  # link. Tags with a suffix (v2.1.0-beta.1) publish a pre-release; plain
+  # version tags make a draft to review first; a labelled PR gets a
+  # "preview-pr<N>" pre-release that is replaced on every push.
   release:
     name: Publish release
     needs: build
-    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ !cancelled() && needs.build.result != 'skipped' && (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'pull_request') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -73,11 +82,22 @@ jobs:
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           mapfile -t files < <(find installers -type f)
           printf 'Attaching: %s\n' "${files[@]}"
-          kind=--draft
-          case "$TAG" in *-*) kind=--prerelease ;; esac
-          gh release create "$TAG" "${files[@]}" --repo "$GITHUB_REPOSITORY" \
-            --title "Roku Control $TAG" --generate-notes "$kind"
+          if [ "$EVENT" = pull_request ]; then
+            tag="preview-pr$PR_NUMBER"
+            gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+            gh release create "$tag" "${files[@]}" --repo "$GITHUB_REPOSITORY" --target "$PR_SHA" --prerelease \
+              --title "Preview build — PR #$PR_NUMBER" \
+              --notes "Test build of pull request #$PR_NUMBER at $PR_SHA. Not a release. Installers are unsigned, so Windows may show a SmartScreen warning: choose More info → Run anyway."
+          else
+            kind=--draft
+            case "$REF_NAME" in *-*) kind=--prerelease ;; esac
+            gh release create "$REF_NAME" "${files[@]}" --repo "$GITHUB_REPOSITORY" \
+              --title "Roku Control $REF_NAME" --generate-notes "$kind"
+          fi
