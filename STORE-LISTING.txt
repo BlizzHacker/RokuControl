@@ -64,7 +64,7 @@ Utilities & tools > Remote & control
 
 --- PRIVACY POLICY URL ---
 
-https://gist.github.com/BlizzHacker/f71942af06897dabd2ba582863977f8e
+https://github.com/BlizzHacker/RokuControl/blob/master/privacy.txt
 
 --- PRICE ---
 
