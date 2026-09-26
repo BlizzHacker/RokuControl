@@ -1,244 +1,266 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { exit } from '@tauri-apps/plugin-process';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { LogicalSize } from '@tauri-apps/api/dpi';
+import { useRoku } from './hooks/useRoku';
+import { api, toError } from './lib/api';
+import { load, save } from './lib/storage';
+import { usage } from './lib/usage';
+import { issueUrl, openLink, rateUrl } from './lib/links';
+import { REPEATABLE, SHORTCUTS, normalizeKey } from './lib/shortcuts';
+import TitleBar from './components/TitleBar';
+import DeviceBar from './components/DeviceBar';
+import Banner from './components/Banner';
+import Remote from './components/Remote';
+import Keyboard from './components/Keyboard';
+import Apps from './components/Apps';
+import Footer from './components/Footer';
+import Toast from './components/Toast';
+import HelpDialog from './components/HelpDialog';
+import DevicesDialog from './components/DevicesDialog';
+import RatePrompt from './components/RatePrompt';
 
-const PRELOADED = [
-  { ip: '192.168.0.126', label: "Wade's Room — Hisense 58\"" },
-  { ip: '192.168.0.124', label: "Alyra's Room — onn. 32\"" },
-];
+const FULL = { w: 480, h: 820, minW: 400, minH: 650 };
+const MINI = { w: 300, h: 540, minW: 280, minH: 460 };
 
-const ICONS = {
-  netflix:'🔴',prime:'📦',hulu:'💚',youtube:'▶️',spotify:'🎵',plex:'🎬',
-  disney:'🐭',apple:'🍎',hbo:'👁️',peacock:'🦚',starz:'⭐',paramount:'🏔️',
-  espn:'⚽',crunchyroll:'🍥',tubi:'📺',pluto:'📡',pandora:'🔷',jellyfin:'🎞️',
-  emby:'📀',cnn:'📰',directv:'📡',cbs:'👁️',fubo:'⚾',backdrops:'🖼️',
-  hdmi:'🔌',av:'🔗',xcast:'📲',camdiggity:'📹',romm:'🕹️',
-};
-const icon = (n) => { const l=(n||'').toLowerCase(); for(const[k,v]of Object.entries(ICONS)) if(l.includes(k)) return v; return '📱'; };
+async function applyWindowMode(compact) {
+  const m = compact ? MINI : FULL;
+  try {
+    const win = getCurrentWindow();
+    await win.setAlwaysOnTop(compact);
+    await win.setMinSize(new LogicalSize(m.minW, m.minH));
+    await win.setSize(new LogicalSize(m.w, m.h));
+  } catch {
+    // Not inside Tauri (plain browser dev server).
+  }
+}
 
-const INPUTS = [
-  {k:'InputTuner',l:'📡 Antenna'},{k:'InputHDMI1',l:'HDMI 1'},
-  {k:'InputHDMI2',l:'HDMI 2'},{k:'InputHDMI3',l:'HDMI 3'},
-  {k:'InputHDMI4',l:'HDMI 4'},{k:'InputAV1',l:'AV'},
-];
-
-export default function App({ widget = false }) {
-  const [devices, setDevices] = useState(PRELOADED);
-  const [sel, setSel] = useState(PRELOADED[0]);
-  const [apps, setApps] = useState([]);
-  const [showApps, setShowApps] = useState(false);
-  const [showInputs, setShowInputs] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const [vol, setVol] = useState(30);
-  const [err, setErr] = useState('');
-  const [text, setText] = useState('');
-  const volRef = useRef(30);
-  const volTimer = useRef(null);
-
-  const refresh = async () => {
-    setScanning(true); setErr('');
-    try {
-      const found = await invoke('discover');
-      if (found?.length) {
-        const merged = [...PRELOADED];
-        for (const d of found) {
-          if (!merged.find(m => m.ip === d.ip))
-            merged.push({ ip: d.ip, label: `${d.name || d.model} — ${d.vendor}` });
-        }
-        setDevices(merged);
-        if (!sel) setSel(merged[0]);
-      }
-    } catch(e) { setErr(e+''); }
-    setScanning(false);
-  };
-
-  const loadApps = useCallback(async (ip) => {
-    try { const a = await invoke('get_apps', { ip }); if (a?.length) setApps(a); } catch(e) {}
+export default function App() {
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef();
+  const notify = useCallback((message, tone = 'error', ms = 6000) => {
+    setToast({ message, tone });
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), ms);
   }, []);
 
-  const selectDevice = (d) => { setSel(d); setApps([]); loadApps(d.ip); };
+  const roku = useRoku({ notify });
+  const { selected: sel, status, press } = roku;
 
-  const send = async (key) => {
-    if (!sel) return;
-    setErr('');
-    try { await invoke('keypress', { ip: sel.ip, key }); } catch(e) { setErr(e+''); }
+  const [dialog, setDialog] = useState(null);
+  const dialogRef = useRef(dialog);
+  dialogRef.current = dialog;
+  const closeDialog = useCallback(() => setDialog(null), []);
+
+  // ── Mini remote: small, always on top ──
+  const [compact, setCompact] = useState(() => load('compact', false));
+  useEffect(() => {
+    if (compact) applyWindowMode(true);
+    // Only restore the saved mode on launch; toggling applies it directly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const toggleCompact = () => {
+    const next = !compact;
+    setCompact(next);
+    save('compact', next);
+    applyWindowMode(next);
   };
 
-  const sendVol = (dir) => {
-    if (!sel) return;
-    const newV = dir === 'up' ? Math.min(100, volRef.current + 3) : Math.max(0, volRef.current - 3);
-    volRef.current = newV;
-    setVol(newV);
-    if (volTimer.current) clearTimeout(volTimer.current);
-    volTimer.current = setTimeout(() => send(dir === 'up' ? 'VolumeUp' : 'VolumeDown'), 20);
-  };
+  // ── Keyboard shortcuts ──
+  const typingRef = useRef(null);
+  const [flash, setFlash] = useState(null);
+  const flashTimer = useRef();
+  const lastRepeat = useRef(0);
 
-  const handleVolChange = (v) => {
-    const target = Number(v);
-    const prev = volRef.current;
-    volRef.current = target;
-    setVol(target);
-    if (volTimer.current) clearTimeout(volTimer.current);
-    const diff = target - prev;
-    const dir = diff > 0 ? 'VolumeUp' : 'VolumeDown';
-    const steps = Math.abs(Math.round(diff / 3));
-    let i = 0;
-    const step = () => {
-      if (i++ >= steps) return;
-      send(dir);
-      volTimer.current = setTimeout(step, 50);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (dialogRef.current || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+      const target = e.target instanceof Element ? e.target : null;
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      const item = SHORTCUTS.get(normalizeKey(e.key));
+      if (!item) return;
+      // A button reached with Tab keeps Enter/Space for itself.
+      if ((e.key === 'Enter' || e.key === ' ') && target?.closest('button')) return;
+      e.preventDefault();
+      if (item.action === 'help') return setDialog({ type: 'help', tab: 'keys' });
+      if (item.action === 'type') return typingRef.current?.focus();
+      if (e.repeat) {
+        if (!REPEATABLE.has(item.roku) || performance.now() - lastRepeat.current < 110) return;
+        lastRepeat.current = performance.now();
+      }
+      press(item.roku, { droppable: e.repeat });
+      setFlash(item.roku);
+      clearTimeout(flashTimer.current);
+      flashTimer.current = setTimeout(() => setFlash(null), 160);
     };
-    step();
-  };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [press]);
 
-  const launch = async (appId) => {
+  // ── Channels and what's playing ──
+  const [apps, setApps] = useState([]);
+  const [appsState, setAppsState] = useState({ loading: false, error: null });
+  const [activeAppId, setActiveAppId] = useState(null);
+
+  const selIdRef = useRef(sel?.id);
+  selIdRef.current = sel?.id;
+
+  const loadApps = useCallback(async () => {
     if (!sel) return;
-    try { await invoke('launch', { ip: sel.ip, appId }); setShowApps(false); } catch(e) { setErr(e+''); }
+    const forId = sel.id;
+    setAppsState({ loading: true, error: null });
+    try {
+      const list = await api.apps(sel.ip);
+      // The user may have switched Rokus while this was loading.
+      if (selIdRef.current !== forId) return;
+      setApps(list);
+      setAppsState({ loading: false, error: null });
+    } catch (e) {
+      if (selIdRef.current !== forId) return;
+      const err = toError(e);
+      setAppsState({
+        loading: false,
+        error: err.kind === 'limited' ? 'Channels are hidden while the Roku is in Limited mode.' : err.message,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel?.id, sel?.ip]);
+
+  useEffect(() => {
+    setApps([]);
+    setActiveAppId(null);
+    setAppsState({ loading: false, error: null });
+  }, [sel?.id]);
+
+  const reachable = status.state === 'online' || status.state === 'standby';
+  useEffect(() => {
+    if (reachable && !apps.length) loadApps();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reachable, sel?.id]);
+
+  const selIp = sel?.ip;
+  useEffect(() => {
+    if (!selIp || compact || status.state !== 'online') return undefined;
+    let live = true;
+    const poll = () => {
+      if (document.visibilityState !== 'visible') return;
+      api.activeApp(selIp).then(
+        (a) => live && setActiveAppId(a?.id ?? null),
+        () => {},
+      );
+    };
+    poll();
+    const id = setInterval(poll, 10_000);
+    return () => {
+      live = false;
+      clearInterval(id);
+    };
+  }, [selIp, compact, status.state]);
+
+  const launchApp = async (appId) => {
+    if (await roku.launch(appId)) setActiveAppId(appId);
   };
 
-  const sendText = async () => {
-    if (!sel || !text.trim()) return;
-    setErr('');
-    try { await invoke('send_text', { ip: sel.ip, text: text.trim() }); setText(''); } catch(e) { setErr(e+''); }
-  };
+  // ── One-time rating prompt after ten minutes of use ──
+  useEffect(() => {
+    let last = Date.now();
+    const id = setInterval(() => {
+      const now = Date.now();
+      if (document.visibilityState === 'visible') usage.addActiveTime(Math.min(now - last, 30_000));
+      last = now;
+      if (!dialogRef.current && usage.shouldAskForRating()) {
+        usage.markRatingAsked();
+        setDialog({ type: 'rate' });
+      }
+    }, 15_000);
+    return () => clearInterval(id);
+  }, []);
 
-  const dpad = [
-    {r:0,c:1,k:'Up',l:'▲'},{r:1,c:0,k:'Left',l:'◀'},
-    {r:1,c:1,k:'Select',l:'OK',cl:'c'},{r:1,c:2,k:'Right',l:'▶'},
-    {r:2,c:1,k:'Down',l:'▼'},
-  ];
+  // ── Feedback straight to GitHub ──
+  const reportProblem = () => openLink(issueUrl('bug', { device: sel, lastError: roku.lastError ?? status.error }));
+  const suggestIdea = () => openLink(issueUrl('idea'));
+  const rate = () => openLink(rateUrl());
+  const openHelp = (tab = 'fix') => setDialog({ type: 'help', tab });
 
   return (
-    <div className={widget ? 'widget' : ''}>
-      <div className="titlebar">
-        <span className="titlebar-text">📺 Roku Control {sel ? `· ${sel.label.split('—')[0].trim()}` : ''}</span>
-        <div style={{display:'flex',gap:4}}>
-          <button className="tb-btn close" onClick={() => exit(0)}>✕</button>
-        </div>
-      </div>
+    <div className={`app${compact ? ' compact' : ''}`}>
+      <TitleBar deviceName={sel?.name} compact={compact} onToggleCompact={toggleCompact} onHelp={() => openHelp()} />
+      <DeviceBar
+        devices={roku.devices}
+        selected={sel}
+        select={roku.select}
+        status={status}
+        scanning={roku.scanning}
+        onRescan={() => roku.discover()}
+        onManage={() => setDialog({ type: 'devices' })}
+      />
 
-      {!widget && (
-        <div className="device-bar">
-          <div className={`dot ${sel ? 'on' : 'off'}`} />
-          <select className="device-select" value={sel?.ip||''} onChange={e => {
-            const d = devices.find(x => x.ip===e.target.value); if(d) selectDevice(d);
-          }}>
-            {devices.map(d => <option key={d.ip} value={d.ip}>{d.label}</option>)}
-          </select>
-          <button className="btn" onClick={refresh} disabled={scanning} style={{padding:'6px 8px'}}>
-            {scanning ? '⏳' : '🔄'}
-          </button>
-        </div>
-      )}
+      <main className="main">
+        <Banner
+          status={status}
+          device={sel}
+          scanning={roku.scanning}
+          waking={roku.waking}
+          onRecheck={roku.check}
+          onPowerOn={roku.powerOn}
+          onRescan={() => roku.discover()}
+          onManage={() => setDialog({ type: 'devices' })}
+          onHelp={() => openHelp()}
+        />
 
-      <div className="main-content">
-        {err && <div className="error-bar">{err}</div>}
+        <Remote
+          device={sel}
+          press={press}
+          launch={launchApp}
+          flash={flash}
+          powerOn={roku.powerOn}
+          waking={roku.waking}
+          inputs={apps.filter((a) => a.type === 'tvin')}
+          compact={compact}
+        />
 
-        {/* Power row */}
-        <div className="status-line">
-          <span style={{color:'var(--text-dim)'}}>{sel?.label || 'No device'}</span>
-          <div style={{display:'flex',gap:4}}>
-            <button className="btn" onClick={() => send('PowerOn')} title="Wake">⏻ Wake</button>
-            <button className="btn sp" onClick={() => send('PowerOff')} title="Sleep">⏻ Sleep</button>
-          </div>
-        </div>
-
-        {/* D-Pad */}
-        <div className="dpad">
-          {dpad.map((k,i) => (
-            <button key={i} className={`dbtn ${k.cl||''}`}
-              style={{gridColumn:k.c+1, gridRow:k.r+1}}
-              onClick={() => send(k.k)}>{k.l}</button>
-          ))}
-        </div>
-
-        {/* Transport: Rewind — PLAY/PAUSE — Fwd — Instant Replay */}
-        <div className="row">
-          <button className="btn" onClick={() => send('Rev')} title="Rewind">⏪</button>
-          <button className="btn sp" onClick={() => send('Play')} title="Play / Pause" style={{fontSize:16,padding:'12px 28px'}}>⏯</button>
-          <button className="btn" onClick={() => send('Fwd')} title="Fast Forward">⏩</button>
-          <button className="btn" onClick={() => send('InstantReplay')} title="Instant Replay">↺</button>
-        </div>
-
-        {/* Navigation */}
-        <div className="row">
-          <button className="btn" onClick={() => send('Home')} title="Home">⌂ Home</button>
-          <button className="btn" onClick={() => send('Back')} title="Back">← Back</button>
-          <button className="btn" onClick={() => send('Info')} title="Info">ℹ Info</button>
-          <button className="btn" onClick={() => send('Search')} title="Search">🔍</button>
-        </div>
-
-        {/* Volume slider — actually sends commands */}
-        <div className="vol-row">
-          <button className="vbtn" onClick={() => sendVol('down')}>🔉</button>
-          <input type="range" className="vslider" min="0" max="100"
-            value={vol} onChange={e => handleVolChange(e.target.value)} />
-          <button className="vbtn" onClick={() => sendVol('up')}>🔊</button>
-          <button className="vbtn" onClick={() => { send('VolumeMute'); setVol(v => v===0 ? 30 : 0); volRef.current = volRef.current===0 ? 30 : 0; }}>
-            {vol===0?'🔇':'🔈'}
-          </button>
-        </div>
-
-        {/* Channel + Inputs */}
-        <div className="row">
-          <button className="btn" onClick={() => send('ChannelUp')}>▲ Ch</button>
-          <button className="btn" onClick={() => send('ChannelDown')}>▼ Ch</button>
-          <button className="btn" onClick={() => setShowInputs(!showInputs)}>🔌 Input</button>
-          <button className="btn" onClick={() => send('FindRemote')} title="Find Remote">🔔 Find</button>
-        </div>
-        {showInputs && (
-          <div className="row">
-            {INPUTS.map(inp => (
-              <button key={inp.k} className="btn" onClick={() => { send(inp.k); setShowInputs(false); }}>{inp.l}</button>
-            ))}
-          </div>
-        )}
-
-        {/* Keyboard input */}
-        {!widget && (
-        <div style={{display:'flex',gap:6,width:'100%',marginTop:2}}>
-          <input type="text" value={text} onChange={e => setText(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') sendText(); }}
-            placeholder="Type to search on TV..."
-            style={{flex:1,background:'var(--bg3)',border:'1px solid var(--border)',
-              borderRadius:'var(--radius-sm)',color:'var(--text)',padding:'8px 10px',fontSize:12,outline:'none'}} />
-          <button className="btn sp" onClick={sendText} style={{padding:'8px 14px'}}>Send</button>
-          <button className="btn" onClick={() => send('Backspace')} style={{padding:'8px 10px'}}>⌫</button>
-        </div>
-        )}
-
-        {/* App Launcher */}
-        {!widget && (
+        {!compact && (
           <>
-            <button className="btn sp" style={{padding:'10px 20px',fontSize:13}} onClick={() => { setShowApps(!showApps); if (!showApps && !apps.length) loadApps(sel?.ip); }}>
-              {showApps ? '📱 Hide Apps' : `📱 Launch App (${apps.length})`}
-            </button>
-            {showApps && apps.length > 0 && (
-              <div className="app-grid">
-                {apps.map((a,i) => (
-                  <div key={a.id||i} className="app-item" onClick={() => launch(a.id)} title={a.name}>
-                    <span className="app-icon">{icon(a.name)}</span>
-                    <span className="app-name">{a.name}</span>
-                  </div>
-                ))}
-              </div>
+            <Keyboard key={sel?.id ?? 'none'} ref={typingRef} device={sel} press={press} typeText={roku.typeText} />
+            {sel && (
+              <Apps
+                device={sel}
+                apps={apps}
+                activeAppId={activeAppId}
+                loading={appsState.loading}
+                error={appsState.error}
+                onLaunch={launchApp}
+                onReload={loadApps}
+              />
             )}
+            <p className="tip">
+              Tip: your keyboard is a remote too — arrows, Enter, Backspace, Space.{' '}
+              <button type="button" className="link-btn" onClick={() => openHelp('keys')}>
+                All shortcuts (?)
+              </button>
+            </p>
+            <Footer onReport={reportProblem} onIdea={suggestIdea} onRate={rate} />
           </>
         )}
+      </main>
 
-        {/* Branding */}
-        <div style={{marginTop:'auto',padding:'10px 0 4px',textAlign:'center'}}>
-          <div style={{fontSize:10,color:'var(--text-dim)',opacity:0.5,letterSpacing:'0.5px'}}>
-            Brought to you ad-free by
-          </div>
-          <div style={{fontSize:11,fontWeight:700,color:'var(--purple-glow)',letterSpacing:'1px',marginTop:1}}>
-            MOVEWEIGHT.NET
-          </div>
-          <div style={{fontSize:9,color:'var(--text-dim)',opacity:0.35,marginTop:1,letterSpacing:'0.5px'}}>
-            WE MAKE DOPE SHIT!
-          </div>
-        </div>
-      </div>
+      <Toast toast={toast} onClose={() => setToast(null)} />
+
+      {dialog?.type === 'help' && (
+        <HelpDialog initialTab={dialog.tab} device={sel} lastError={roku.lastError ?? status.error} onReport={reportProblem} onClose={closeDialog} />
+      )}
+      {dialog?.type === 'devices' && (
+        <DevicesDialog
+          devices={roku.devices}
+          selected={sel}
+          scanning={roku.scanning}
+          onAdd={roku.addByIp}
+          onScan={() => roku.discover({ deep: true })}
+          onForget={roku.forget}
+          onSelect={roku.select}
+          onClose={closeDialog}
+        />
+      )}
+      {dialog?.type === 'rate' && <RatePrompt onIdea={suggestIdea} onClose={closeDialog} />}
     </div>
   );
 }
