@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Roku Control",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "identifier": "com.moveweight.roku-control",
   "build": {
     "frontendDist": "../dist",
@@ -20,11 +20,12 @@
         "resizable": true,
         "decorations": false,
         "transparent": true,
-        "center": true
+        "center": true,
+        "label": "main"
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src ipc: http://192.168.*:* http://10.*:* http://172.16.*:*; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; img-src 'self' data:; connect-src ipc: http://ipc.localhost; style-src 'self' 'unsafe-inline'"
     }
   },
   "bundle": {
