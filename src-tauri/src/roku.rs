@@ -58,7 +58,10 @@ pub struct EcpError {
 
 impl EcpError {
     pub fn new(kind: ErrorKind, message: impl Into<String>) -> Self {
-        Self { kind, message: message.into() }
+        Self {
+            kind,
+            message: message.into(),
+        }
     }
     fn invalid(message: impl Into<String>) -> Self {
         Self::new(ErrorKind::Invalid, message)
@@ -101,7 +104,10 @@ fn transport_error(host: &str, e: &reqwest::Error) -> EcpError {
             ),
         )
     } else {
-        EcpError::new(ErrorKind::Other, format!("Network error talking to {host}: {e}"))
+        EcpError::new(
+            ErrorKind::Other,
+            format!("Network error talking to {host}: {e}"),
+        )
     }
 }
 
@@ -112,7 +118,9 @@ fn transport_error(host: &str, e: &reqwest::Error) -> EcpError {
 pub fn normalize_host(input: &str) -> Result<String, EcpError> {
     let mut s = input.trim();
     for scheme in ["http://", "https://"] {
-        if s.get(..scheme.len()).is_some_and(|p| p.eq_ignore_ascii_case(scheme)) {
+        if s.get(..scheme.len())
+            .is_some_and(|p| p.eq_ignore_ascii_case(scheme))
+        {
             s = &s[scheme.len()..];
         }
     }
@@ -145,7 +153,9 @@ pub fn normalize_host(input: &str) -> Result<String, EcpError> {
     if valid_hostname {
         Ok(s.to_ascii_lowercase())
     } else {
-        Err(EcpError::invalid(format!("\"{s}\" isn't an IP address or hostname.")))
+        Err(EcpError::invalid(format!(
+            "\"{s}\" isn't an IP address or hostname."
+        )))
     }
 }
 
@@ -153,11 +163,15 @@ pub fn normalize_host(input: &str) -> Result<String, EcpError> {
 pub fn validate_key(key: &str) -> Result<(), EcpError> {
     let ok = !key.is_empty()
         && key.len() <= 64
-        && key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '%');
+        && key
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '%');
     if ok {
         Ok(())
     } else {
-        Err(EcpError::invalid(format!("\"{key}\" isn't a Roku key name.")))
+        Err(EcpError::invalid(format!(
+            "\"{key}\" isn't a Roku key name."
+        )))
     }
 }
 
@@ -165,7 +179,9 @@ pub fn validate_key(key: &str) -> Result<(), EcpError> {
 pub fn validate_app_id(id: &str) -> Result<(), EcpError> {
     let ok = !id.is_empty()
         && id.len() <= 64
-        && id.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'));
+        && id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'));
     if ok {
         Ok(())
     } else {
@@ -283,7 +299,9 @@ fn xml_text(xml: &str, tag: &str) -> String {
     xml.find(&open)
         .and_then(|start| {
             let inner = &xml[start + open.len()..];
-            inner.find(&close).map(|end| unescape_xml(inner[..end].trim()))
+            inner
+                .find(&close)
+                .map(|end| unescape_xml(inner[..end].trim()))
         })
         .unwrap_or_default()
 }
@@ -367,7 +385,10 @@ pub fn parse_device_info(ip: &str, xml: &str) -> Option<RokuDevice> {
 }
 
 fn first_non_empty<const N: usize>(candidates: [String; N]) -> String {
-    candidates.into_iter().find(|s| !s.is_empty()).unwrap_or_default()
+    candidates
+        .into_iter()
+        .find(|s| !s.is_empty())
+        .unwrap_or_default()
 }
 
 pub async fn device_info(host: &str) -> Result<RokuDevice, EcpError> {
@@ -425,7 +446,10 @@ pub fn parse_apps(xml: &str) -> Vec<RokuApp> {
 
 pub async fn apps(host: &str) -> Result<Vec<RokuApp>, EcpError> {
     let xml = ecp_get_text(host, "query/apps").await?;
-    Ok(parse_apps(&xml).into_iter().filter(|a| !a.id.is_empty()).collect())
+    Ok(parse_apps(&xml)
+        .into_iter()
+        .filter(|a| !a.id.is_empty())
+        .collect())
 }
 
 /// What's on screen now. `None` when the Roku is on its home screen.
@@ -448,7 +472,10 @@ pub async fn app_icon(host: &str, app_id: &str) -> Result<String, EcpError> {
         .to_string();
     let bytes = resp.bytes().await.map_err(|e| transport_error(host, &e))?;
     if bytes.is_empty() || bytes.len() > 1_000_000 {
-        return Err(EcpError::new(ErrorKind::Unsupported, "No icon for this app."));
+        return Err(EcpError::new(
+            ErrorKind::Unsupported,
+            "No icon for this app.",
+        ));
     }
     let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
     Ok(format!("data:{mime};base64,{b64}"))
@@ -526,7 +553,10 @@ pub fn local_networks() -> Vec<LocalNet> {
         .into_iter()
         .filter(|iface| !iface.is_loopback())
         .filter_map(|iface| match iface.addr {
-            if_addrs::IfAddr::V4(v4) => Some(LocalNet { ip: v4.ip, netmask: v4.netmask }),
+            if_addrs::IfAddr::V4(v4) => Some(LocalNet {
+                ip: v4.ip,
+                netmask: v4.netmask,
+            }),
             _ => None,
         })
         .filter(|n| !n.ip.is_loopback() && !n.ip.is_link_local() && !n.ip.is_unspecified())
@@ -616,7 +646,8 @@ async fn ssdp_search(nets: &[LocalNet], window: Duration) -> HashSet<String> {
                 let slice = deadline
                     .saturating_duration_since(Instant::now())
                     .min(Duration::from_millis(150));
-                if let Ok(Ok((n, src))) = tokio::time::timeout(slice, sock.recv_from(&mut buf)).await
+                if let Ok(Ok((n, src))) =
+                    tokio::time::timeout(slice, sock.recv_from(&mut buf)).await
                 {
                     if let Some(host) = parse_ssdp_response(&buf[..n], src) {
                         found.insert(host);
@@ -698,7 +729,12 @@ pub async fn discover(deep: bool) -> Vec<RokuDevice> {
             }
         }
     }
-    devices.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()).then(a.ip.cmp(&b.ip)));
+    devices.sort_by(|a, b| {
+        a.name
+            .to_lowercase()
+            .cmp(&b.name.to_lowercase())
+            .then(a.ip.cmp(&b.ip))
+    });
     devices
 }
 
@@ -731,7 +767,10 @@ pub fn parse_mac(s: &str) -> Option<[u8; 6]> {
 }
 
 pub fn format_mac(mac: [u8; 6]) -> String {
-    mac.iter().map(|b| format!("{b:02x}")).collect::<Vec<_>>().join(":")
+    mac.iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<Vec<_>>()
+        .join(":")
 }
 
 pub fn magic_packet(mac: &[u8; 6]) -> [u8; 102] {
@@ -749,7 +788,11 @@ async fn send_magic_packets(macs: &[[u8; 6]], host: &str, nets: &[LocalNet]) -> 
     let _ = sock.set_broadcast(true);
 
     let mut targets: Vec<Ipv4Addr> = vec![Ipv4Addr::BROADCAST];
-    targets.extend(nets.iter().filter(|n| n.ip.is_private()).map(LocalNet::broadcast));
+    targets.extend(
+        nets.iter()
+            .filter(|n| n.ip.is_private())
+            .map(LocalNet::broadcast),
+    );
     if let Ok(ip) = host.parse::<Ipv4Addr>() {
         targets.push(ip);
     }
@@ -793,7 +836,8 @@ fn arp_lookup_blocking(ip: Ipv4Addr) -> Option<String> {
     {
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        cmd.creation_flags(CREATE_NO_WINDOW).args(["-a", &ip.to_string()]);
+        cmd.creation_flags(CREATE_NO_WINDOW)
+            .args(["-a", &ip.to_string()]);
     }
     #[cfg(not(windows))]
     cmd.args(["-n", &ip.to_string()]);
@@ -938,9 +982,15 @@ mod tests {
     #[test]
     fn device_name_falls_back_to_model_then_ip() {
         let xml = "<device-info><vendor-name>Roku</vendor-name><model-name>Roku Express</model-name></device-info>";
-        assert_eq!(parse_device_info("10.0.0.5", xml).unwrap().name, "Roku Express");
+        assert_eq!(
+            parse_device_info("10.0.0.5", xml).unwrap().name,
+            "Roku Express"
+        );
         let xml = "<device-info><serial-number>X1</serial-number></device-info>";
-        assert_eq!(parse_device_info("10.0.0.5", xml).unwrap().name, "Roku at 10.0.0.5");
+        assert_eq!(
+            parse_device_info("10.0.0.5", xml).unwrap().name,
+            "Roku at 10.0.0.5"
+        );
     }
 
     #[test]
@@ -959,7 +1009,15 @@ mod tests {
 </apps>"#;
         let apps = parse_apps(xml);
         assert_eq!(apps.len(), 4);
-        assert_eq!(apps[0], RokuApp { id: "tvinput.hdmi1".into(), name: "Xbox".into(), kind: "tvin".into(), version: "1.0.0".into() });
+        assert_eq!(
+            apps[0],
+            RokuApp {
+                id: "tvinput.hdmi1".into(),
+                name: "Xbox".into(),
+                kind: "tvin".into(),
+                version: "1.0.0".into()
+            }
+        );
         assert_eq!(apps[2].kind, "appl");
         assert_eq!(apps[3].name, "Max & HBO");
     }
@@ -969,13 +1027,19 @@ mod tests {
         let home = "<active-app><app>Roku</app></active-app>";
         assert!(parse_apps(home).into_iter().all(|a| a.id.is_empty()));
         let playing = r#"<active-app><app id="12" type="appl" version="5.1">Netflix</app><screensaver id="55545" type="ssvr" version="2.0.1">Aquarium</screensaver></active-app>"#;
-        let first = parse_apps(playing).into_iter().find(|a| !a.id.is_empty()).unwrap();
+        let first = parse_apps(playing)
+            .into_iter()
+            .find(|a| !a.id.is_empty())
+            .unwrap();
         assert_eq!(first.name, "Netflix");
     }
 
     #[test]
     fn unescapes_entities() {
-        assert_eq!(unescape_xml("A &amp; B &lt;3 &#233;&#x1F600; & done"), "A & B <3 é😀 & done");
+        assert_eq!(
+            unescape_xml("A &amp; B &lt;3 &#233;&#x1F600; & done"),
+            "A & B <3 é😀 & done"
+        );
         assert_eq!(unescape_xml("no entities"), "no entities");
         assert_eq!(unescape_xml("&bogus;"), "&bogus;");
     }
@@ -983,7 +1047,10 @@ mod tests {
     #[test]
     fn text_becomes_lit_keys() {
         assert_eq!(text_to_keys("Hi 5"), ["Lit_H", "Lit_i", "Lit_%20", "Lit_5"]);
-        assert_eq!(text_to_keys("a+b&c/?#"), ["Lit_a", "Lit_%2B", "Lit_b", "Lit_%26", "Lit_c", "Lit_%2F", "Lit_%3F", "Lit_%23"]);
+        assert_eq!(
+            text_to_keys("a+b&c/?#"),
+            ["Lit_a", "Lit_%2B", "Lit_b", "Lit_%26", "Lit_c", "Lit_%2F", "Lit_%3F", "Lit_%23"]
+        );
         assert_eq!(text_to_keys("é"), ["Lit_%C3%A9"]);
         assert_eq!(text_to_keys("ok\r\n\t"), ["Lit_o", "Lit_k", "Enter"]);
         for key in text_to_keys("Crème brûlée — 100% 🎬") {
@@ -994,9 +1061,27 @@ mod tests {
     #[test]
     fn normalizes_hosts() {
         assert_eq!(normalize_host(" 192.168.1.20 ").unwrap(), "192.168.1.20");
-        assert_eq!(normalize_host("http://192.168.1.20:8060/query/device-info").unwrap(), "192.168.1.20");
-        assert_eq!(normalize_host("HTTP://Roku-Den.local").unwrap(), "roku-den.local");
-        for bad in ["", "   ", "192.168.1.300", "0.0.0.0", "255.255.255.255", "evil com", "a b", "roku_den.local", "-bad.local", "http://", "é.local"] {
+        assert_eq!(
+            normalize_host("http://192.168.1.20:8060/query/device-info").unwrap(),
+            "192.168.1.20"
+        );
+        assert_eq!(
+            normalize_host("HTTP://Roku-Den.local").unwrap(),
+            "roku-den.local"
+        );
+        for bad in [
+            "",
+            "   ",
+            "192.168.1.300",
+            "0.0.0.0",
+            "255.255.255.255",
+            "evil com",
+            "a b",
+            "roku_den.local",
+            "-bad.local",
+            "http://",
+            "é.local",
+        ] {
             let err = normalize_host(bad).unwrap_err();
             assert_eq!(err.kind, ErrorKind::Invalid, "{bad:?} should be rejected");
         }
@@ -1036,7 +1121,16 @@ mod tests {
         assert_eq!(parse_mac("A0-62-FB-02-1C-0E"), Some(want));
         assert_eq!(parse_mac("a0:62:fb:2:1c:e"), Some(want));
         assert_eq!(parse_mac("a062fb021c0e"), Some(want));
-        for bad in ["", "00:00:00:00:00:00", "ff:ff:ff:ff:ff:ff", "a0:62:fb:02:1c", "zz:62:fb:02:1c:0e", "0x1", "192.168.1.1", "a0:62:fb:02:1c:0e:11"] {
+        for bad in [
+            "",
+            "00:00:00:00:00:00",
+            "ff:ff:ff:ff:ff:ff",
+            "a0:62:fb:02:1c",
+            "zz:62:fb:02:1c:0e",
+            "0x1",
+            "192.168.1.1",
+            "a0:62:fb:02:1c:0e:11",
+        ] {
             assert_eq!(parse_mac(bad), None, "{bad:?}");
         }
         assert_eq!(format_mac(want), "a0:62:fb:02:1c:0e");
@@ -1058,7 +1152,10 @@ mod tests {
         let macos = "? (192.168.0.1) at 10:20:30:40:50:60 on en0 ifscope [ethernet]\n? (192.168.0.126) at a0:62:fb:9a:1c:be on en0 ifscope [ethernet]\n";
         let linux = "IP address       HW type     Flags       HW address            Mask     Device\n192.168.0.126    0x1         0x2         a0:62:fb:9a:1c:be     *        wlan0\n192.168.0.12     0x1         0x0         00:00:00:00:00:00     *        wlan0\n";
         for table in [windows, macos, linux] {
-            assert_eq!(parse_arp_output(table, ip).as_deref(), Some("a0:62:fb:9a:1c:be"));
+            assert_eq!(
+                parse_arp_output(table, ip).as_deref(),
+                Some("a0:62:fb:9a:1c:be")
+            );
         }
         let incomplete: Ipv4Addr = "192.168.0.12".parse().unwrap();
         assert_eq!(parse_arp_output(linux, incomplete), None);
@@ -1068,28 +1165,51 @@ mod tests {
 
     #[test]
     fn scan_targets_cover_the_local_subnet_only() {
-        let net = |ip: &str, mask: &str| LocalNet { ip: ip.parse().unwrap(), netmask: mask.parse().unwrap() };
+        let net = |ip: &str, mask: &str| LocalNet {
+            ip: ip.parse().unwrap(),
+            netmask: mask.parse().unwrap(),
+        };
         let t = scan_targets(&[net("192.168.1.50", "255.255.255.0")]);
         assert_eq!(t.len(), 253);
         assert!(!t.contains(&"192.168.1.50".parse().unwrap()));
-        assert!(!t.contains(&"192.168.1.0".parse().unwrap()) && !t.contains(&"192.168.1.255".parse().unwrap()));
+        assert!(
+            !t.contains(&"192.168.1.0".parse().unwrap())
+                && !t.contains(&"192.168.1.255".parse().unwrap())
+        );
         // A /16 is narrowed to our own /24.
         assert_eq!(scan_targets(&[net("10.0.4.9", "255.255.0.0")]).len(), 253);
         // A /22 is scanned whole.
-        assert_eq!(scan_targets(&[net("172.16.5.9", "255.255.252.0")]).len(), 1021);
+        assert_eq!(
+            scan_targets(&[net("172.16.5.9", "255.255.252.0")]).len(),
+            1021
+        );
         // Public addresses and point-to-point links are never scanned.
-        assert!(scan_targets(&[net("8.8.8.8", "255.255.255.0"), net("192.168.9.1", "255.255.255.255")]).is_empty());
-        assert_eq!(net("192.168.1.50", "255.255.255.0").broadcast(), "192.168.1.255".parse::<Ipv4Addr>().unwrap());
+        assert!(scan_targets(&[
+            net("8.8.8.8", "255.255.255.0"),
+            net("192.168.9.1", "255.255.255.255")
+        ])
+        .is_empty());
+        assert_eq!(
+            net("192.168.1.50", "255.255.255.0").broadcast(),
+            "192.168.1.255".parse::<Ipv4Addr>().unwrap()
+        );
     }
 
     #[test]
     fn parses_ssdp_replies() {
         let src: SocketAddr = "192.168.1.77:1900".parse().unwrap();
         let reply = b"HTTP/1.1 200 OK\r\nCache-Control: max-age=3600\r\nST: roku:ecp\r\nLOCATION: http://192.168.1.134:8060/\r\nUSN: uuid:roku:ecp:X01900ABCDEF\r\n\r\n";
-        assert_eq!(parse_ssdp_response(reply, src).as_deref(), Some("192.168.1.134"));
+        assert_eq!(
+            parse_ssdp_response(reply, src).as_deref(),
+            Some("192.168.1.134")
+        );
         let no_location = b"HTTP/1.1 200 OK\r\nST: roku:ecp\r\n\r\n";
-        assert_eq!(parse_ssdp_response(no_location, src).as_deref(), Some("192.168.1.77"));
-        let not_roku = b"HTTP/1.1 200 OK\r\nST: upnp:rootdevice\r\nLOCATION: http://192.168.1.1:5000/\r\n\r\n";
+        assert_eq!(
+            parse_ssdp_response(no_location, src).as_deref(),
+            Some("192.168.1.77")
+        );
+        let not_roku =
+            b"HTTP/1.1 200 OK\r\nST: upnp:rootdevice\r\nLOCATION: http://192.168.1.1:5000/\r\n\r\n";
         assert_eq!(parse_ssdp_response(not_roku, src), None);
     }
 
@@ -1100,30 +1220,51 @@ mod tests {
     async fn discovers_on_this_network() {
         let start = std::time::Instant::now();
         let nets = local_networks();
-        println!("networks: {nets:?} ({} scan targets)", scan_targets(&nets).len());
+        println!(
+            "networks: {nets:?} ({} scan targets)",
+            scan_targets(&nets).len()
+        );
         let found = discover(false).await;
-        println!("{} Roku(s) in {:?}: {found:#?}", found.len(), start.elapsed());
-        assert!(start.elapsed() < Duration::from_secs(20), "discovery must stay quick");
+        println!(
+            "{} Roku(s) in {:?}: {found:#?}",
+            found.len(),
+            start.elapsed()
+        );
+        assert!(
+            start.elapsed() < Duration::from_secs(20),
+            "discovery must stay quick"
+        );
     }
 
     /// A tiny fake Roku on a loopback address, answering every request with
     /// the scripted status and body, and recording the request lines it saw.
     #[cfg(target_os = "linux")]
-    async fn fake_roku(ip: &str, routes: Vec<(&'static str, u16, &'static str)>) -> Arc<std::sync::Mutex<Vec<String>>> {
+    async fn fake_roku(
+        ip: &str,
+        routes: Vec<(&'static str, u16, &'static str)>,
+    ) -> Arc<std::sync::Mutex<Vec<String>>> {
         use tokio::io::{AsyncReadExt, AsyncWriteExt};
-        let listener = tokio::net::TcpListener::bind((ip, ECP_PORT)).await.expect("bind fake roku");
+        let listener = tokio::net::TcpListener::bind((ip, ECP_PORT))
+            .await
+            .expect("bind fake roku");
         let seen = Arc::new(std::sync::Mutex::new(Vec::new()));
         let log = seen.clone();
         tokio::spawn(async move {
             loop {
-                let Ok((mut stream, _)) = listener.accept().await else { return };
+                let Ok((mut stream, _)) = listener.accept().await else {
+                    return;
+                };
                 let routes = routes.clone();
                 let log = log.clone();
                 tokio::spawn(async move {
                     let mut buf = vec![0u8; 4096];
                     loop {
-                        let Ok(n) = stream.read(&mut buf).await else { return };
-                        if n == 0 { return; }
+                        let Ok(n) = stream.read(&mut buf).await else {
+                            return;
+                        };
+                        if n == 0 {
+                            return;
+                        }
                         let req = String::from_utf8_lossy(&buf[..n]).to_string();
                         let line = req.lines().next().unwrap_or_default().to_string();
                         log.lock().unwrap().push(line.clone());
@@ -1132,8 +1273,13 @@ mod tests {
                             .find(|(prefix, _, _)| line.contains(prefix))
                             .map(|(_, s, b)| (*s, *b))
                             .unwrap_or((404, ""));
-                        let resp = format!("HTTP/1.1 {status} X\r\nContent-Length: {}\r\n\r\n{body}", body.len());
-                        if stream.write_all(resp.as_bytes()).await.is_err() { return; }
+                        let resp = format!(
+                            "HTTP/1.1 {status} X\r\nContent-Length: {}\r\n\r\n{body}",
+                            body.len()
+                        );
+                        if stream.write_all(resp.as_bytes()).await.is_err() {
+                            return;
+                        }
                     }
                 });
             }
@@ -1145,29 +1291,60 @@ mod tests {
     #[tokio::test]
     async fn talks_to_a_roku_and_reports_limited_mode() {
         let ip = "127.0.0.61";
-        let seen = fake_roku(ip, vec![
-            ("/query/device-info", 200, DEVICE_INFO),
-            ("/keypress/VolumeUp", 200, ""),
-            ("/keypress/Home", 403, "ECP command not allowed in limited mode."),
-            ("/keypress/Lit_", 200, ""),
-            ("/launch/12", 200, ""),
-        ]).await;
+        let seen = fake_roku(
+            ip,
+            vec![
+                ("/query/device-info", 200, DEVICE_INFO),
+                ("/keypress/VolumeUp", 200, ""),
+                (
+                    "/keypress/Home",
+                    403,
+                    "ECP command not allowed in limited mode.",
+                ),
+                ("/keypress/Lit_", 200, ""),
+                ("/launch/12", 200, ""),
+            ],
+        )
+        .await;
 
         let dev = device_info(ip).await.unwrap();
         assert_eq!(dev.name, "Living Room & Den");
         keypress(ip, "VolumeUp").await.unwrap();
         let err = keypress(ip, "Home").await.unwrap_err();
         assert_eq!(err.kind, ErrorKind::Limited);
-        assert_eq!(keypress(ip, "InputHDMI9").await.unwrap_err().kind, ErrorKind::Unsupported);
+        assert_eq!(
+            keypress(ip, "InputHDMI9").await.unwrap_err().kind,
+            ErrorKind::Unsupported
+        );
         send_text(ip, "a b").await.unwrap();
         launch(ip, "12").await.unwrap();
 
         let seen = seen.lock().unwrap().clone();
-        assert!(seen.contains(&"POST /keypress/Lit_a HTTP/1.1".to_string()), "{seen:?}");
-        assert!(seen.contains(&"POST /keypress/Lit_%20 HTTP/1.1".to_string()), "{seen:?}");
-        assert!(seen.contains(&"POST /launch/12 HTTP/1.1".to_string()), "{seen:?}");
-        let order: Vec<_> = seen.iter().filter(|l| l.contains("Lit_")).cloned().collect();
-        assert_eq!(order, ["POST /keypress/Lit_a HTTP/1.1", "POST /keypress/Lit_%20 HTTP/1.1", "POST /keypress/Lit_b HTTP/1.1"]);
+        assert!(
+            seen.contains(&"POST /keypress/Lit_a HTTP/1.1".to_string()),
+            "{seen:?}"
+        );
+        assert!(
+            seen.contains(&"POST /keypress/Lit_%20 HTTP/1.1".to_string()),
+            "{seen:?}"
+        );
+        assert!(
+            seen.contains(&"POST /launch/12 HTTP/1.1".to_string()),
+            "{seen:?}"
+        );
+        let order: Vec<_> = seen
+            .iter()
+            .filter(|l| l.contains("Lit_"))
+            .cloned()
+            .collect();
+        assert_eq!(
+            order,
+            [
+                "POST /keypress/Lit_a HTTP/1.1",
+                "POST /keypress/Lit_%20 HTTP/1.1",
+                "POST /keypress/Lit_b HTTP/1.1"
+            ]
+        );
     }
 
     #[cfg(target_os = "linux")]
@@ -1188,7 +1365,10 @@ mod tests {
         let report = power_on(ip, &[]).await.unwrap();
         assert_eq!(report.method, "ecp");
         assert_eq!(report.packets_sent, 0);
-        assert_eq!(seen.lock().unwrap().as_slice(), ["POST /keypress/PowerOn HTTP/1.1"]);
+        assert_eq!(
+            seen.lock().unwrap().as_slice(),
+            ["POST /keypress/PowerOn HTTP/1.1"]
+        );
     }
 
     #[cfg(target_os = "linux")]
@@ -1197,7 +1377,13 @@ mod tests {
         let ip = "127.0.0.63";
         let seen = fake_roku(ip, vec![("/keypress/Home", 200, "")]).await;
         assert_eq!(power_on(ip, &[]).await.unwrap().method, "ecp");
-        assert_eq!(seen.lock().unwrap().as_slice(), ["POST /keypress/PowerOn HTTP/1.1", "POST /keypress/Home HTTP/1.1"]);
+        assert_eq!(
+            seen.lock().unwrap().as_slice(),
+            [
+                "POST /keypress/PowerOn HTTP/1.1",
+                "POST /keypress/Home HTTP/1.1"
+            ]
+        );
     }
 
     #[cfg(target_os = "linux")]

@@ -1,65 +1,47 @@
-# Publishing to the Microsoft Store
+# Microsoft Store recovery and release notes
 
-Roku Control is an MSIX product in Partner Center (Store ID `9MTNNGZKJ1WK`,
-package identity `MOVEWEIGHT.RokuControl`). The *Build installers* workflow
-builds the app and packs the Store `.msix` with the Windows SDK's `makeappx`
-from `msix/AppxManifest.xml`. Partner Center signs the package on upload.
+## Existing product identity
 
-## Before every release
+- Store product ID: `9MTNNGZKJ1WK`
+- Current MSIX identity name: `MOVEWEIGHT.RokuControl`
+- Publisher: `CN=6375D74B-5E4F-45B4-B246-B29507C1332A`
+- Product name for the English Store listing: **Open Remote Control**
 
-1. Bump the version in `package.json`, `src-tauri/Cargo.toml`,
-   `src-tauri/tauri.conf.json` and `msix/AppxManifest.xml` (`2.1.0` → `2.1.0.0`).
-   The Store only accepts a version higher than the one it has.
-2. Update `CHANGELOG.md` and the "What's new" block in `STORE-LISTING.txt`.
+Keep the Store ID, MSIX Identity Name, publisher certificate identity, and Tauri `identifier` unchanged. The rebrand changes the display name and app content only. Do not create a new Store product.
 
-## Build and publish the release
+## Why Microsoft removed the product
 
-Actions → **Build installers** → **Run workflow** on `master`:
+The October 10, 2026 certification report rejected the Store product name under policy 10.1.1.1, **Inaccurate Representation**: the name “Roku Control” was found to contain the title of another software or service. The September 24 report gave a deadline to submit a name update by October 8. The product was removed after that deadline. The draft submission still listed Store listings as unchanged, even though the package was updated to 2.1.1.
 
-- **release:** the tag to publish, e.g. `v2.1.0`. The installers and the
-  `.msix` are attached to a GitHub release with that tag.
-- **store:** tick it to also submit the `.msix` to the Store (see below).
+Partner Center now says the removed product cannot be submitted until the publisher contacts its Microsoft representative. Include product ID `9MTNNGZKJ1WK` in that request. Once Microsoft re-enables submission for this same product, update the Store listing name and text, upload version 2.1.2, review the existing submission, and submit for certification.
 
-## Submit to the Store
+## Package build
 
-### Option A — automatically from GitHub (one-time setup)
+The package workflow builds the app for Windows, macOS and Linux, then packs the Windows executable with `msix/AppxManifest.xml`. Microsoft signs the MSIX after upload.
 
-1. Partner Center → **Account settings** → **User management** →
-   **Azure AD applications** → **Add Azure AD application** (create a new one),
-   role **Manager**. Create a **key** for it.
-2. Note the **Tenant ID**, **Client ID** and the key (client secret), and your
-   **Seller ID** (Account settings → Legal info → Developer tab).
-3. GitHub → repository **Settings** → **Secrets and variables** → **Actions**,
-   add: `PARTNER_CENTER_TENANT_ID`, `PARTNER_CENTER_CLIENT_ID`,
-   `PARTNER_CENTER_CLIENT_SECRET`, `PARTNER_CENTER_SELLER_ID`.
+1. Bump the version consistently in `package.json`, `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`, and `msix/AppxManifest.xml`. The current version is 2.1.2.
+2. Run `npm ci`, `npm run build`, and `cd src-tauri && cargo test`.
+3. Run the **Build installers** GitHub Actions workflow. It attaches the MSIX and desktop installers.
+4. Do not run automatic Store publishing while Partner Center marks this product removed. After Microsoft restores the existing product, the existing package can be uploaded to the same listing.
 
-From then on, running the workflow with **store** ticked uploads the package
-and submits it for certification using Microsoft's `msstore` CLI.
+## Partner Center update checklist
 
-### Option B — by hand
+After Microsoft restores the product for submission:
 
-1. Download `RokuControl_<version>_x64.msix` from the GitHub release.
-2. Partner Center → Apps and games → **Roku Control** → **Start update**.
-3. **Packages:** upload the `.msix`; remove the previous version's package.
-4. **Store listings:** paste the description and "What's new" from
-   `STORE-LISTING.txt`; refresh screenshots if the UI changed.
-5. **Properties:** privacy policy URL
-   `https://github.com/BlizzHacker/RokuControl/blob/master/privacy.txt`.
-6. **Submit for certification.**
+1. Open product `9MTNNGZKJ1WK` and resume its existing draft.
+2. In **Store listings**, set English **Product name** to exactly `Open Remote Control`; update the description, features and What's new from `STORE-LISTING.txt`.
+3. Keep the existing listing languages and product identity.
+4. In **Packages**, replace the draft package with `OpenRemoteControl_2.1.2.0_x64.msix`. The MSIX identity remains `MOVEWEIGHT.RokuControl`.
+5. Review screenshots and privacy URL, confirm the age ratings and submission options remain valid, then inspect the final review page.
+6. Submit only after the listing title and package show the new values.
+
+## Store package identity
+
+`msix/AppxManifest.xml` uses the Store identity `MOVEWEIGHT.RokuControl` and publisher certificate specified above. The app's Tauri identifier remains `com.moveweight.roku-control` so existing app-data and local preferences continue to resolve.
 
 ## Certification notes
 
-- Capabilities: `runFullTrust` (restricted — it's a desktop app; the
-  justification is "Tauri desktop app, runs as a full-trust Win32 process"),
-  `privateNetworkClientServer` (talking to Rokus on the LAN) and
-  `internetClient`.
-- Common rejections: the app must launch on a clean machine, the privacy
-  policy URL must load, and the listing must only describe features the app
-  has.
-- Screenshots (1366×768 PNG, at least 1): main remote, channels grid, mini
-  remote, help/shortcuts.
-
-## Cost
-
-$19 one-time Partner Center registration for individuals. Publishing free apps
-costs nothing, and the app has no backend.
+- Required capabilities: `runFullTrust` (Tauri desktop process), `privateNetworkClientServer` (LAN TV control) and `internetClient` (links the user chooses to open).
+- Android TV support uses Android TV Remote Service over local TLS. The user authorizes pairing by entering the code displayed on the TV. Its client certificate and private key are stored only in the user's app-data folder.
+- Store listing must describe only Roku and Android TV / Google TV features implemented by this package.
+- Privacy policy: `https://github.com/BlizzHacker/RokuControl/blob/master/privacy.txt`.

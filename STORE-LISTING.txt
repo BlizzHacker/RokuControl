@@ -1,79 +1,65 @@
-=== COPY EVERYTHING BELOW INTO YOUR STORE LISTING ===
+MICROSOFT STORE LISTING — EXISTING PRODUCT 9MTNNGZKJ1WK
 
---- DESCRIPTION ---
+Product name (English): Open Remote Control
+Keep the existing Store product ID and package identity. Do not create a new product.
 
-Control any Roku TV or streaming player on your network with this free desktop remote. No ads, no accounts, no tracking — it only ever talks to the Rokus in your home.
+DESCRIPTION
 
-FINDS YOUR ROKU BY ITSELF
-Open the app and it searches your network — on every adapter, with a direct scan if your router blocks discovery. It remembers each Roku by serial number, so it keeps working when your router gives the TV a new address. Or add one by IP in seconds.
+One remote for Roku, Android TV and Google TV — right from your Windows PC. Connect to TVs on your home network with no account, ads or tracking. Open Remote Control talks directly to your TV; it does not route commands through a cloud service.
 
-TURN YOUR TV ON FROM STANDBY
-One click sends Power On. If the TV has dropped off the network, the app sends a Wake-on-LAN signal and keeps trying. (For the most reliable wake-up, turn on Fast TV start on your Roku TV — the app shows you how.)
+ROKU TVS AND PLAYERS
 
-YOUR KEYBOARD IS A REMOTE
-Arrow keys move, Enter is OK, Backspace is Back, Space plays and pauses, + and − change the volume. Hold a key to keep scrolling. Press ? to see every shortcut.
+• Find Roku devices automatically or add one by IP.
+• Use a tactile, directional remote layout with arrows and OK.
+• Open channels, launch apps and switch TV inputs.
+• Type into Roku search fields with your PC keyboard.
+• See why commands fail, including Roku OS Limited mode.
+• Send Power On and Wake-on-LAN requests. For reliable wake from deep standby, enable Fast TV Start on the Roku TV.
 
-TYPE STRAIGHT INTO YOUR TV
-Search Netflix, YouTube, Plex or any app by typing on your real keyboard — letters show up on the TV as you type, accents and symbols included.
+ANDROID TV AND GOOGLE TV
 
-EVERY BUTTON ON THE REMOTE
-D-pad and OK, Back, Home, Options, Search, Play/Pause, Rewind, Fast Forward, Instant Replay, Volume and Mute, Channel Up/Down, TV inputs by the names you gave them, and Find My Remote.
+• Pair by IP using the short code shown on your TV.
+• Control navigation, Back, Home, playback, volume and mute.
+• Send wake and standby requests over Android TV Remote Service.
+• Keep the pairing identity on this computer for reconnecting after restart.
 
-YOUR CHANNELS, ONE CLICK AWAY
-All your channels with their real icons, a quick filter, and what's on now.
+YOUR NETWORK, YOUR TV
 
-MINI REMOTE
-A compact remote that stays on top of your other windows.
+Free and open source. No account, subscriptions, ads, analytics or tracking. Device control stays on your local network.
 
-TELLS YOU WHAT'S WRONG — AND HOW TO FIX IT
-A live status light shows whether your Roku is connected, asleep or unreachable. If your Roku is blocking remote control (Roku's "Limited" mode), the app shows you exactly which setting to change.
+WHAT'S NEW (2.1.2)
 
-FREE, OPEN SOURCE, PRIVATE
-Made ad-free by MoveWeight.com. Report a problem or suggest an idea from inside the app. The source code is on GitHub.
+• Rebranded as Open Remote Control.
+• Added Android TV and Google TV pairing and remote controls.
+• Kept Roku discovery, Limited Mode diagnostics, wake assistance, keyboard controls and app/channel tools.
+• Updated the remote layout and device manager for multiple TV platforms.
 
---- WHAT'S NEW (2.1.0) ---
+FEATURES
 
-• Finds your Roku automatically when you open the app
-• Fixes "only volume works": the app now spots Roku's Limited mode and shows the setting to change
-• Turn on your TV from standby (Power On + Wake-on-LAN)
-• Full keyboard control and live typing into search boxes
-• Real channel icons, TV inputs by name, mini always-on-top remote
-• Clear messages when something's wrong, and a Help screen
-• Report problems and suggest ideas straight from the app
+• Roku TVs and streaming players
+• Android TV and Google TV pairing by on-screen code
+• Physical-remote style arrows and OK button
+• Roku discovery, apps, channels and TV inputs
+• Roku Limited Mode diagnostics and wake assistance
+• Android TV navigation, playback, volume, mute, wake and standby
+• No account, ads, telemetry or cloud relay
 
---- FEATURES (short list) ---
+KEYWORDS
 
-• Automatic Roku discovery — follows your TV when its IP changes
-• Turn on from standby (Power On + Wake-on-LAN)
-• Keyboard shortcuts for every button
-• Live typing into search boxes
-• Full D-pad, playback, volume and channel controls
-• TV inputs and channel launcher with real icons
-• Live connection status with fix-it help
-• Mini remote that stays on top
-• Report problems and ideas from the app
-• No ads, no accounts, no tracking — free and open source
+TV remote, Roku remote, Android TV remote, Google TV remote, smart TV remote, desktop remote, streaming player remote
 
---- KEYWORDS ---
+CATEGORY
 
-roku remote, roku control, tv remote, roku tv, hisense remote, tcl remote, onn remote, roku keyboard, desktop remote, roku controller, plex remote, smart tv remote
+Keep the existing assigned category unless Partner Center flags it for correction.
 
---- CATEGORY ---
-
-Utilities & tools > Remote & control
-
---- PRIVACY POLICY URL ---
+PRIVACY POLICY URL
 
 https://github.com/BlizzHacker/RokuControl/blob/master/privacy.txt
 
---- PRICE ---
+PRICE
 
 Free
 
---- SCREENSHOTS (need 1366x768 PNG, 3 minimum) ---
+SCREENSHOTS
 
-Take these with Win+Shift+S while the app is open:
-1. Main remote with D-pad and all buttons visible
-2. Channels grid with channel icons and "On now"
-3. Mini remote floating over the desktop
-4. Help screen showing keyboard shortcuts
+Refresh screenshots for the Open Remote Control title and multi-platform device manager. Show the Roku remote, the Android TV pairing flow, and the paired Android TV remote. Do not show private IPs, home-device names, serials or pairing codes.

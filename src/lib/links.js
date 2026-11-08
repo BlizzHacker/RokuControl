@@ -27,15 +27,18 @@ const redactIps = (s) => String(s ?? '').replace(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g,
 
 /** What a bug report needs, minus anything personal: no IPs, serials, MACs or names. */
 export function diagnostics(device, lastError) {
-  const lines = [`Roku Control ${APP_VERSION} on ${osName()}`];
+  const lines = [`Open Remote Control ${APP_VERSION} on ${osName()}`];
   if (device) {
     const model = [device.vendor, device.model, device.modelNumber].filter(Boolean).join(' ');
-    lines.push(`Roku: ${model || 'model unknown'}${device.isTv ? ' (TV)' : ''}`);
-    lines.push(`Roku OS: ${device.softwareVersion || 'unknown'}`);
-    lines.push(`Control by mobile apps: ${device.ecpMode || 'not reported'}`);
-    lines.push(`Power mode: ${device.powerMode || 'unknown'} · Network: ${device.networkType || 'unknown'}`);
+    const isAndroidTv = device.platform === 'androidtv';
+    lines.push(`${isAndroidTv ? 'Android TV / Google TV' : 'Roku'}: ${model || 'model unknown'}${device.isTv ? ' (TV)' : ''}`);
+    lines.push(`${isAndroidTv ? 'Remote Service' : 'Roku OS'}: ${device.softwareVersion || 'unknown'}`);
+    if (!isAndroidTv) {
+      lines.push(`Control by mobile apps: ${device.ecpMode || 'not reported'}`);
+      lines.push(`Power mode: ${device.powerMode || 'unknown'} · Network: ${device.networkType || 'unknown'}`);
+    }
   } else {
-    lines.push('Roku: none found');
+    lines.push('No TV selected');
   }
   if (lastError) lines.push(`Last error (${lastError.kind}): ${redactIps(lastError.message)}`);
   return lines.join('\n');

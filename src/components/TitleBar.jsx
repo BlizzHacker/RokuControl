@@ -14,9 +14,13 @@ export default function TitleBar({ deviceName, compact, onToggleCompact, onHelp 
     <header className="titlebar" onMouseDown={startDrag}>
       <div className="titlebar-left">
         <span className="logo" aria-hidden>
-          ⏻
+          <svg viewBox="0 0 24 24" focusable="false">
+            <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            <path d="M12 3.5v5M12 20.5v-5M3.5 12h5M20.5 12h-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="12" cy="12" r="2.3" fill="currentColor" />
+          </svg>
         </span>
-        <span className="titlebar-text">Roku Control</span>
+        <span className="titlebar-text">Open Remote Control</span>
         {deviceName && !compact && <span className="titlebar-device">· {deviceName}</span>}
       </div>
       <div className="titlebar-buttons">

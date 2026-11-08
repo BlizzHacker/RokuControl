@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { LogicalSize } from '@tauri-apps/api/dpi';
 import { useRoku } from './hooks/useRoku';
+import { useAndroidTv } from './hooks/useAndroidTv';
 import { api, toError } from './lib/api';
 import { load, save } from './lib/storage';
 import { usage } from './lib/usage';
@@ -44,19 +45,43 @@ export default function App() {
   }, []);
 
   const roku = useRoku({ notify });
-  const { selected: sel, status, press } = roku;
+  const android = useAndroidTv({ notify });
+  const devices = [...roku.devices, ...android.devices];
+  const [activeId, setActiveId] = useState(() => load('activeDevice', load('selected', null)));
+  const sel = devices.find((device) => device.id === activeId) ?? roku.selected ?? android.selected ?? null;
+  const isAndroidTv = sel?.platform === 'androidtv';
+  const status = sel ? (isAndroidTv ? android.status : roku.status) : { state: roku.scanning ? 'scanning' : 'none' };
+  const waking = isAndroidTv ? android.waking : roku.waking;
+  const scanning = roku.scanning;
+  const lastError = isAndroidTv ? android.lastError : roku.lastError;
+
+  const selectDevice = useCallback((id) => {
+    setActiveId(id);
+    save('activeDevice', id);
+    const device = devices.find((item) => item.id === id);
+    if (device?.platform === 'androidtv') android.select(id);
+    else if (device) roku.select(id);
+  }, [devices, android.select, roku.select]);
+
+  useEffect(() => {
+    if (!sel) return;
+    save('activeDevice', sel.id);
+    if (sel.platform === 'androidtv') android.select(sel.id);
+    else roku.select(sel.id);
+  }, [sel?.id, sel?.platform, android.select, roku.select]);
+
+  const press = useCallback((key, options) => isAndroidTv ? android.press(key, options) : roku.press(key, options), [isAndroidTv, android.press, roku.press]);
+  const powerOn = useCallback(() => isAndroidTv ? android.powerOn() : roku.powerOn(), [isAndroidTv, android.powerOn, roku.powerOn]);
+  const check = useCallback(() => isAndroidTv ? android.check() : roku.check(), [isAndroidTv, android.check, roku.check]);
 
   const [dialog, setDialog] = useState(null);
   const dialogRef = useRef(dialog);
   dialogRef.current = dialog;
   const closeDialog = useCallback(() => setDialog(null), []);
 
-  // ── Mini remote: small, always on top ──
   const [compact, setCompact] = useState(() => load('compact', false));
   useEffect(() => {
     if (compact) applyWindowMode(true);
-    // Only restore the saved mode on launch; toggling applies it directly.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const toggleCompact = () => {
     const next = !compact;
@@ -65,12 +90,10 @@ export default function App() {
     applyWindowMode(next);
   };
 
-  // ── Keyboard shortcuts ──
   const typingRef = useRef(null);
   const [flash, setFlash] = useState(null);
   const flashTimer = useRef();
   const lastRepeat = useRef(0);
-
   useEffect(() => {
     const onKey = (e) => {
       if (dialogRef.current || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -78,11 +101,13 @@ export default function App() {
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
       const item = SHORTCUTS.get(normalizeKey(e.key));
       if (!item) return;
-      // A button reached with Tab keeps Enter/Space for itself.
       if ((e.key === 'Enter' || e.key === ' ') && target?.closest('button')) return;
       e.preventDefault();
       if (item.action === 'help') return setDialog({ type: 'help', tab: 'keys' });
-      if (item.action === 'type') return typingRef.current?.focus();
+      if (item.action === 'type') {
+        if (!isAndroidTv) typingRef.current?.focus();
+        return;
+      }
       if (e.repeat) {
         if (!REPEATABLE.has(item.roku) || performance.now() - lastRepeat.current < 110) return;
         lastRepeat.current = performance.now();
@@ -94,23 +119,20 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [press]);
+  }, [press, isAndroidTv]);
 
-  // ── Channels and what's playing ──
   const [apps, setApps] = useState([]);
   const [appsState, setAppsState] = useState({ loading: false, error: null });
   const [activeAppId, setActiveAppId] = useState(null);
-
   const selIdRef = useRef(sel?.id);
   selIdRef.current = sel?.id;
 
   const loadApps = useCallback(async () => {
-    if (!sel) return;
+    if (!sel || sel.platform === 'androidtv') return;
     const forId = sel.id;
     setAppsState({ loading: true, error: null });
     try {
       const list = await api.apps(sel.ip);
-      // The user may have switched Rokus while this was loading.
       if (selIdRef.current !== forId) return;
       setApps(list);
       setAppsState({ loading: false, error: null });
@@ -122,8 +144,7 @@ export default function App() {
         error: err.kind === 'limited' ? 'Channels are hidden while the Roku is in Limited mode.' : err.message,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sel?.id, sel?.ip]);
+  }, [sel?.id, sel?.ip, sel?.platform]);
 
   useEffect(() => {
     setApps([]);
@@ -133,34 +154,27 @@ export default function App() {
 
   const reachable = status.state === 'online' || status.state === 'standby';
   useEffect(() => {
-    if (reachable && !apps.length) loadApps();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reachable, sel?.id]);
+    if (reachable && sel?.platform !== 'androidtv' && !apps.length) loadApps();
+  }, [reachable, sel?.id, sel?.platform, apps.length, loadApps]);
 
-  const selIp = sel?.ip;
   useEffect(() => {
-    if (!selIp || compact || status.state !== 'online') return undefined;
+    if (!sel?.ip || sel.platform === 'androidtv' || compact || status.state !== 'online') return undefined;
     let live = true;
     const poll = () => {
       if (document.visibilityState !== 'visible') return;
-      api.activeApp(selIp).then(
-        (a) => live && setActiveAppId(a?.id ?? null),
-        () => {},
-      );
+      api.activeApp(sel.ip).then((app) => live && setActiveAppId(app?.id ?? null), () => {});
     };
     poll();
     const id = setInterval(poll, 10_000);
-    return () => {
-      live = false;
-      clearInterval(id);
-    };
-  }, [selIp, compact, status.state]);
+    return () => { live = false; clearInterval(id); };
+  }, [sel?.ip, sel?.platform, compact, status.state]);
 
   const launchApp = async (appId) => {
+    if (isAndroidTv) return false;
     if (await roku.launch(appId)) setActiveAppId(appId);
+    return true;
   };
 
-  // ── One-time rating prompt after ten minutes of use ──
   useEffect(() => {
     let last = Date.now();
     const id = setInterval(() => {
@@ -175,21 +189,44 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  // ── Feedback straight to GitHub ──
-  const reportProblem = () => openLink(issueUrl('bug', { device: sel, lastError: roku.lastError ?? status.error }));
+  const reportProblem = () => openLink(issueUrl('bug', { device: sel, lastError: lastError ?? status.error }));
   const suggestIdea = () => openLink(issueUrl('idea'));
   const rate = () => openLink(rateUrl());
   const openHelp = (tab = 'fix') => setDialog({ type: 'help', tab });
+
+  const addRoku = useCallback(async (ip) => {
+    const info = await roku.addByIp(ip);
+    const id = info.serial || info.deviceId || `ip:${info.ip}`;
+    selectDevice(id);
+    return info;
+  }, [roku.addByIp, selectDevice]);
+
+  const finishAndroidPairing = useCallback(async (ip, code) => {
+    const device = await android.finishPairing(ip, code);
+    selectDevice(device.id);
+    return device;
+  }, [android.finishPairing, selectDevice]);
+
+  const forgetDevice = useCallback((id) => {
+    const device = devices.find((item) => item.id === id);
+    if (device?.platform === 'androidtv') android.forget(id);
+    else roku.forget(id);
+    if (activeId === id) {
+      const next = devices.find((item) => item.id !== id);
+      setActiveId(next?.id ?? null);
+      if (next) save('activeDevice', next.id);
+    }
+  }, [devices, android.forget, roku.forget, activeId]);
 
   return (
     <div className={`app${compact ? ' compact' : ''}`}>
       <TitleBar deviceName={sel?.name} compact={compact} onToggleCompact={toggleCompact} onHelp={() => openHelp()} />
       <DeviceBar
-        devices={roku.devices}
+        devices={devices}
         selected={sel}
-        select={roku.select}
+        select={selectDevice}
         status={status}
-        scanning={roku.scanning}
+        scanning={scanning}
         onRescan={() => roku.discover()}
         onManage={() => setDialog({ type: 'devices' })}
       />
@@ -198,10 +235,10 @@ export default function App() {
         <Banner
           status={status}
           device={sel}
-          scanning={roku.scanning}
-          waking={roku.waking}
-          onRecheck={roku.check}
-          onPowerOn={roku.powerOn}
+          scanning={scanning}
+          waking={waking}
+          onRecheck={check}
+          onPowerOn={powerOn}
           onRescan={() => roku.discover()}
           onManage={() => setDialog({ type: 'devices' })}
           onHelp={() => openHelp()}
@@ -212,16 +249,18 @@ export default function App() {
           press={press}
           launch={launchApp}
           flash={flash}
-          powerOn={roku.powerOn}
-          waking={roku.waking}
+          powerOn={powerOn}
+          waking={waking}
           inputs={apps.filter((a) => a.type === 'tvin')}
           compact={compact}
         />
 
         {!compact && (
           <>
-            <Keyboard key={sel?.id ?? 'none'} ref={typingRef} device={sel} press={press} typeText={roku.typeText} />
-            {sel && (
+            {isAndroidTv
+              ? <p className="tip">Paired to Android TV / Google TV. Use the directional pad, Back, Home, playback and volume controls.</p>
+              : <Keyboard key={sel?.id ?? 'none'} ref={typingRef} device={sel} press={press} typeText={roku.typeText} />}
+            {sel && !isAndroidTv && (
               <Apps
                 device={sel}
                 apps={apps}
@@ -232,12 +271,10 @@ export default function App() {
                 onReload={loadApps}
               />
             )}
-            <p className="tip">
+            {!isAndroidTv && <p className="tip">
               Tip: your keyboard is a remote too — arrows, Enter, Backspace, Space.{' '}
-              <button type="button" className="link-btn" onClick={() => openHelp('keys')}>
-                All shortcuts (?)
-              </button>
-            </p>
+              <button type="button" className="link-btn" onClick={() => openHelp('keys')}>All shortcuts (?)</button>
+            </p>}
             <Footer onReport={reportProblem} onIdea={suggestIdea} onRate={rate} />
           </>
         )}
@@ -246,17 +283,20 @@ export default function App() {
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       {dialog?.type === 'help' && (
-        <HelpDialog initialTab={dialog.tab} device={sel} lastError={roku.lastError ?? status.error} onReport={reportProblem} onClose={closeDialog} />
+        <HelpDialog initialTab={dialog.tab} device={sel} lastError={lastError ?? status.error} onReport={reportProblem} onClose={closeDialog} />
       )}
       {dialog?.type === 'devices' && (
         <DevicesDialog
-          devices={roku.devices}
+          devices={devices}
           selected={sel}
-          scanning={roku.scanning}
-          onAdd={roku.addByIp}
+          scanning={scanning}
+          onAdd={addRoku}
+          onStartPairing={android.startPairing}
+          onFinishPairing={finishAndroidPairing}
+          onCancelPairing={android.cancelPairing}
           onScan={() => roku.discover({ deep: true })}
-          onForget={roku.forget}
-          onSelect={roku.select}
+          onForget={forgetDevice}
+          onSelect={selectDevice}
           onClose={closeDialog}
         />
       )}
