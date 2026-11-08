@@ -914,7 +914,7 @@ pub async fn power_on(host: &str, macs: &[String]) -> Result<PowerOnReport, EcpE
     let mut packets = 0;
     let mut last_wol: Option<Instant> = None;
     while Instant::now() < deadline {
-        if last_wol.map_or(true, |t| t.elapsed() >= Duration::from_secs(3)) {
+        if last_wol.is_none_or(|t| t.elapsed() >= Duration::from_secs(3)) {
             packets += send_magic_packets(&known, host, &nets).await;
             last_wol = Some(Instant::now());
         }
