@@ -1,5 +1,5 @@
 name: Report a problem
-description: Something in Roku Control doesn't work the way it should.
+description: Something in Open Remote Control doesn't work the way it should.
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -23,7 +23,7 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Open Roku Control
+        1. Open Open Remote Control
         2. Pick my living room TV
         3. …
   - type: textarea

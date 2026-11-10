@@ -17,6 +17,13 @@ export const api = {
   sendText: (ip, text) => invoke('send_text', { ip, text }),
   powerOn: (ip, macs) => invoke('power_on', { ip, macs }),
   lookupMac: (ip) => invoke('lookup_mac', { ip }),
+  androidTvStartPairing: (ip) => invoke('android_tv_start_pairing', { ip }),
+  androidTvFinishPairing: (ip, code) => invoke('android_tv_finish_pairing', { ip, code }),
+  androidTvConnect: (ip) => invoke('android_tv_connect', { ip }),
+  androidTvKeypress: (ip, key) => invoke('android_tv_keypress', { ip, key }),
+  androidTvPowerOn: (ip) => invoke('android_tv_power_on', { ip }),
+  androidTvCancelPairing: (ip) => invoke('android_tv_cancel_pairing', { ip }),
+  androidTvForget: (ip) => invoke('android_tv_forget', { ip }),
   openLink: (url) => invoke('open_link', { url }),
 };
 

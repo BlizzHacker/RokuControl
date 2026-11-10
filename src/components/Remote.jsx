@@ -12,10 +12,10 @@ const FALLBACK_INPUTS = [
 
 export default function Remote({ device, press, launch, flash, powerOn, waking, inputs, compact }) {
   const [showInputs, setShowInputs] = useState(false);
-  // Unknown (e.g. a Limited-mode Roku we couldn't query) counts as a TV.
   const isTv = device?.isTv !== false;
-  const key = (rokuKey, children, props = {}) => (
-    <RemoteButton rokuKey={rokuKey} onPress={press} flash={flash} {...props}>
+  const isRoku = device?.platform !== 'androidtv';
+  const key = (remoteKey, children, props = {}) => (
+    <RemoteButton rokuKey={remoteKey} onPress={press} flash={flash} {...props}>
       {children}
     </RemoteButton>
   );
@@ -23,31 +23,31 @@ export default function Remote({ device, press, launch, flash, powerOn, waking, 
   return (
     <section className={`remote${device ? '' : ' disabled'}`} aria-label="Remote" aria-disabled={!device}>
       <div className="power-row">
-        <button type="button" className="btn power-on" onClick={powerOn} disabled={!device || waking} title="Turns the TV on — even from standby">
+        <button type="button" className="btn power-on" onClick={powerOn} disabled={!device || waking} title="Send a wake request to the TV">
           {waking ? <span className="spin">⟳</span> : '⏻'} {waking ? 'Waking…' : 'Turn on'}
         </button>
-        {key('PowerOff', '⏻ Turn off', { className: 'btn power-off', title: 'Turn off' })}
-        {!compact && device?.supportsFindRemote !== false &&
+        {key('PowerOff', '⏻ Turn off', { className: 'btn power-off', title: 'Put the TV in standby' })}
+        {!compact && isRoku && device?.supportsFindRemote !== false &&
           key('FindRemote', '🔔', { className: 'btn ghost square', title: 'Find my remote (makes it beep)', 'aria-label': 'Find remote' })}
       </div>
 
       <div className="nav-row">
-        {key('Back', '← Back', { className: 'btn', title: 'Back (Backspace / Esc)' })}
-        {key('Home', '⌂ Home', { className: 'btn', title: 'Home (H)' })}
+        {key('Back', '←', { className: 'btn nav-icon', title: 'Back (Backspace / Esc)', 'aria-label': 'Back' })}
+        {key('Home', '⌂', { className: 'btn nav-icon', title: 'Home (H)', 'aria-label': 'Home' })}
       </div>
 
-      <div className="dpad">
-        {key('Up', '▲', { className: 'dbtn up', repeat: true, title: 'Up (↑)', 'aria-label': 'Up' })}
-        {key('Left', '◀', { className: 'dbtn left', repeat: true, title: 'Left (←)', 'aria-label': 'Left' })}
+      <div className="dpad" aria-label="Directional pad">
+        {key('Up', '\u25B2', { className: 'dbtn up', repeat: true, title: 'Up (↑)', 'aria-label': 'Up' })}
+        {key('Left', '\u25C0', { className: 'dbtn left', repeat: true, title: 'Left (←)', 'aria-label': 'Left' })}
         {key('Select', 'OK', { className: 'dbtn ok', title: 'OK (Enter)' })}
-        {key('Right', '▶', { className: 'dbtn right', repeat: true, title: 'Right (→)', 'aria-label': 'Right' })}
-        {key('Down', '▼', { className: 'dbtn down', repeat: true, title: 'Down (↓)', 'aria-label': 'Down' })}
+        {key('Right', '\u25B6', { className: 'dbtn right', repeat: true, title: 'Right (→)', 'aria-label': 'Right' })}
+        {key('Down', '\u25BC', { className: 'dbtn down', repeat: true, title: 'Down (↓)', 'aria-label': 'Down' })}
       </div>
 
       <div className="row">
         {key('InstantReplay', '↺', { className: 'btn round', title: 'Instant replay (R)', 'aria-label': 'Instant replay' })}
-        {key('Info', '✱', { className: 'btn round', title: 'Options (I or *)', 'aria-label': 'Options' })}
-        {key('Search', '🔍', { className: 'btn round', title: 'Search (S)', 'aria-label': 'Search' })}
+        {key('Info', '✱', { className: 'btn round', title: 'Options or settings (I or *)', 'aria-label': 'Options or settings' })}
+        {key('Search', '⌕', { className: 'btn round', title: 'Search (S)', 'aria-label': 'Search' })}
       </div>
 
       <div className="row transport">
@@ -63,7 +63,7 @@ export default function Remote({ device, press, launch, flash, powerOn, waking, 
         {key('VolumeUp', '+', { className: 'vbtn wide', repeat: true, title: 'Volume up (+) — hold to keep going', 'aria-label': 'Volume up' })}
       </div>
 
-      {isTv && !compact && (
+      {isRoku && isTv && !compact && (
         <>
           <div className="row">
             {key('ChannelDown', 'Ch −', { className: 'btn', repeat: true, title: 'Channel down (Page Down)' })}
@@ -75,14 +75,14 @@ export default function Remote({ device, press, launch, flash, powerOn, waking, 
           {showInputs && (
             <div className="row inputs">
               {inputs.length > 0
-                ? inputs.map((inp) => (
-                    <button type="button" key={inp.id} className="btn small" onClick={() => { launch(inp.id); setShowInputs(false); }}>
-                      {inp.name}
+                ? inputs.map((input) => (
+                    <button type="button" key={input.id} className="btn small" onClick={() => { launch(input.id); setShowInputs(false); }}>
+                      {input.name}
                     </button>
                   ))
-                : FALLBACK_INPUTS.map((inp) => (
-                    <button type="button" key={inp.key} className="btn small" onClick={() => { press(inp.key); setShowInputs(false); }}>
-                      {inp.label}
+                : FALLBACK_INPUTS.map((input) => (
+                    <button type="button" key={input.key} className="btn small" onClick={() => { press(input.key); setShowInputs(false); }}>
+                      {input.label}
                     </button>
                   ))}
             </div>

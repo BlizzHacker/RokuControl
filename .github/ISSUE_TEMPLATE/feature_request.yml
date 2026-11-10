@@ -1,12 +1,12 @@
 name: Suggest an idea
-description: A feature, a button, a shortcut — anything that would make Roku Control better for you.
+description: A feature, a button, a shortcut — anything that would make Open Remote Control better for you.
 title: "[Idea]: "
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Roku Control is free, open source and ad-free. Ideas from people who use it decide what gets built next — thank you!
+        Open Remote Control is free, open source and ad-free. Ideas from people who use it decide what gets built next — thank you!
   - type: textarea
     id: idea
     attributes:

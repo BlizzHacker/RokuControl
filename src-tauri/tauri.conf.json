@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Roku Control",
-  "version": "2.1.0",
+  "productName": "Open Remote Control",
+  "version": "2.1.2",
   "identifier": "com.moveweight.roku-control",
   "build": {
     "frontendDist": "../dist",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Roku Control",
+        "title": "Open Remote Control",
         "width": 480,
         "height": 820,
         "minWidth": 400,

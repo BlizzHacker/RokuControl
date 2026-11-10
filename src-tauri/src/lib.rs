@@ -1,10 +1,74 @@
+mod android_tv;
 mod roku;
 
 use roku::{EcpError, ErrorKind, PowerOnReport, RokuApp, RokuDevice};
-use tauri::Manager;
+use tauri::{Manager, State};
 use tauri_plugin_opener::OpenerExt;
 
 type CmdResult<T> = Result<T, EcpError>;
+
+#[tauri::command]
+async fn android_tv_start_pairing(
+    app: tauri::AppHandle,
+    state: State<'_, android_tv::AndroidTvState>,
+    ip: String,
+) -> Result<android_tv::AndroidTvPairingInfo, String> {
+    android_tv::start_pairing(&app, &state, &ip).await
+}
+
+#[tauri::command]
+async fn android_tv_finish_pairing(
+    app: tauri::AppHandle,
+    state: State<'_, android_tv::AndroidTvState>,
+    ip: String,
+    code: String,
+) -> Result<android_tv::AndroidTvDevice, String> {
+    android_tv::finish_pairing(&app, &state, &ip, &code).await
+}
+
+#[tauri::command]
+async fn android_tv_connect(
+    app: tauri::AppHandle,
+    state: State<'_, android_tv::AndroidTvState>,
+    ip: String,
+) -> Result<android_tv::AndroidTvDevice, String> {
+    android_tv::connect(&app, &state, &ip).await
+}
+
+#[tauri::command]
+async fn android_tv_keypress(
+    app: tauri::AppHandle,
+    state: State<'_, android_tv::AndroidTvState>,
+    ip: String,
+    key: String,
+) -> Result<(), String> {
+    android_tv::keypress(&app, &state, &ip, &key).await
+}
+
+#[tauri::command]
+async fn android_tv_power_on(
+    app: tauri::AppHandle,
+    state: State<'_, android_tv::AndroidTvState>,
+    ip: String,
+) -> Result<(), String> {
+    android_tv::power_on(&app, &state, &ip).await
+}
+
+#[tauri::command]
+async fn android_tv_cancel_pairing(
+    state: State<'_, android_tv::AndroidTvState>,
+    ip: String,
+) -> Result<(), String> {
+    android_tv::cancel_pairing(&state, &ip).await
+}
+
+#[tauri::command]
+async fn android_tv_forget(
+    state: State<'_, android_tv::AndroidTvState>,
+    ip: String,
+) -> Result<(), String> {
+    android_tv::forget(&state, &ip).await
+}
 
 #[tauri::command]
 async fn discover(deep: Option<bool>) -> Vec<RokuDevice> {
@@ -85,7 +149,10 @@ fn is_allowed_link(url: &str) -> bool {
 #[tauri::command]
 fn open_link(app: tauri::AppHandle, url: String) -> CmdResult<()> {
     if !is_allowed_link(&url) {
-        return Err(EcpError::new(ErrorKind::Invalid, "That link isn't allowed."));
+        return Err(EcpError::new(
+            ErrorKind::Invalid,
+            "That link isn't allowed.",
+        ));
     }
     app.opener()
         .open_url(url, None::<&str>)
@@ -95,6 +162,7 @@ fn open_link(app: tauri::AppHandle, url: String) -> CmdResult<()> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(android_tv::AndroidTvState::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
@@ -108,6 +176,13 @@ pub fn run() {
             send_text,
             power_on,
             lookup_mac,
+            android_tv_start_pairing,
+            android_tv_finish_pairing,
+            android_tv_connect,
+            android_tv_keypress,
+            android_tv_power_on,
+            android_tv_cancel_pairing,
+            android_tv_forget,
             open_link,
         ])
         .on_window_event(|window, event| {
@@ -118,7 +193,7 @@ pub fn run() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running Roku Control");
+        .expect("error while running Open Remote Control");
 }
 
 #[cfg(test)]

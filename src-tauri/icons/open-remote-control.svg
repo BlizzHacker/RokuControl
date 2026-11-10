@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="32" y1="28" x2="480" y2="486" gradientUnits="userSpaceOnUse"><stop stop-color="#0b1b2b"/><stop offset="1" stop-color="#172a43"/></linearGradient>
+    <linearGradient id="body" x1="145" y1="62" x2="372" y2="454" gradientUnits="userSpaceOnUse"><stop stop-color="#284b60"/><stop offset="1" stop-color="#11283a"/></linearGradient>
+    <linearGradient id="accent" x1="169" y1="114" x2="345" y2="379" gradientUnits="userSpaceOnUse"><stop stop-color="#9df1e7"/><stop offset="1" stop-color="#41cbbb"/></linearGradient>
+  </defs>
+  <rect x="12" y="12" width="488" height="488" rx="112" fill="url(#bg)"/>
+  <path d="M256 46c-68 0-119 49-119 117v186c0 69 51 117 119 117s119-48 119-117V163c0-68-51-117-119-117Z" fill="url(#body)" stroke="#b0dedf" stroke-opacity=".38" stroke-width="7"/>
+  <circle cx="256" cy="221" r="88" fill="#0c1d2a" stroke="url(#accent)" stroke-width="9"/>
+  <path d="m256 151-19 27h12v17h14v-17h12l-19-27Zm0 140 19-27h-12v-17h-14v17h-12l19 27Zm-70-70 27 19v-12h17v-14h-17v-12l-27 19Zm140 0-27-19v12h-17v14h17v12l27-19Z" fill="url(#accent)"/>
+  <circle cx="256" cy="221" r="18" fill="#0c1d2a" stroke="#9df1e7" stroke-width="7"/>
+  <circle cx="196" cy="353" r="14" fill="#9df1e7"/>
+  <circle cx="256" cy="373" r="14" fill="#5ad9cc"/>
+  <circle cx="316" cy="353" r="14" fill="#9df1e7"/>
+</svg>

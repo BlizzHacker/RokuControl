@@ -44,12 +44,12 @@ function Troubleshooting({ device, lastError, onReport }) {
       <details open>
         <summary>Only volume works, or buttons show “blocking this app”</summary>
         <p>
-          Newer Roku software ships in <em>Limited</em> mode. On the TV go to <b>Settings › System › Advanced system settings › Control by
+          Roku devices can block remote commands in <em>Limited</em> mode. On the TV go to <b>Settings › System › Advanced system settings › Control by
           mobile apps</b> and choose <b>Enabled</b>. If you see <b>Network access</b>, pick <b>Default</b> or <b>Permissive</b> — not Limited.
         </p>
       </details>
       <details>
-        <summary>The app can't find my Roku</summary>
+        <summary>The app can't find my TV</summary>
         <ol>
           <li>Your computer and Roku must be on the same network — not a guest network.</li>
           <li>On Windows, open Settings › Network &amp; internet, pick your Wi-Fi and set it to <b>Private</b>.</li>
@@ -81,7 +81,7 @@ function Troubleshooting({ device, lastError, onReport }) {
           {copied ? '✓ Copied' : 'Copy diagnostics'}
         </button>
       </div>
-      <p className="fine">Reports open on GitHub in your browser, pre-filled with your Roku's model and software version (never its IP, name or serial). Nothing is sent until you press Submit there.</p>
+      <p className="fine">Reports open on GitHub in your browser, pre-filled with the selected TV family and model (never its IP, name, serial or pairing key). Nothing is sent until you press Submit there.</p>
     </div>
   );
 }
@@ -90,8 +90,8 @@ function About() {
   return (
     <div className="about">
       <p>
-        <b>Roku Control {APP_VERSION}</b> — a free, open-source remote for Roku TVs and players. No ads, no accounts, no tracking: the app
-        only ever talks to the Rokus on your own network.
+        <b>Open Remote Control {APP_VERSION}</b> — a free, open-source remote for Roku, Android TV and Google TV. No ads, no accounts, no tracking: the app
+        talks directly to TVs on your local network.
       </p>
       <div className="modal-actions">
         <button type="button" className="btn" onClick={() => openLink(WEBSITE)}>
@@ -101,7 +101,7 @@ function About() {
           Source code
         </button>
       </div>
-      <p className="fine">MIT licensed · Roku is a trademark of Roku, Inc. This app is not affiliated with Roku.</p>
+      <p className="fine">MIT licensed · Roku, Android TV and Google TV are trademarks of their respective owners. Open Remote Control is independent and unaffiliated.</p>
     </div>
   );
 }

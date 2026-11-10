@@ -1,7 +1,7 @@
 {
-  "name": "roku-control",
+  "name": "open-remote-control",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.1.2",
   "type": "module",
   "scripts": {
     "dev": "vite",

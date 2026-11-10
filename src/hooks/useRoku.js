@@ -27,6 +27,7 @@ export function mergeDevice(list, info, extra = {}) {
     ...prev,
     ...fields,
     ...extra,
+    platform: 'roku',
     id: prev?.id ?? (info.serial || info.deviceId || `ip:${info.ip}`),
     macs: uniq([...(prev?.macs ?? []), wifiMac, ethernetMac]),
     lastSeen: Date.now(),
@@ -46,7 +47,7 @@ export function statusFromInfo(info) {
 }
 
 export function useRoku({ notify }) {
-  const [devices, setDevices] = useState(() => load('devices', []));
+  const [devices, setDevices] = useState(() => load('devices', []).map((device) => ({ ...device, platform: 'roku' })));
   const [selectedId, setSelectedId] = useState(() => load('selected', null));
   const [status, setStatus] = useState({ state: 'checking' });
   const [scanning, setScanning] = useState(false);

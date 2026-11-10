@@ -1,21 +1,15 @@
-Privacy Policy for Roku Control
+Privacy Policy for Open Remote Control
 
-Last updated: September 2026
+Last updated: November 2026
 
-Roku Control does not collect, store on any server, share, or transmit any personal information, usage data, or telemetry.
+Open Remote Control does not collect, store on any server, share, or transmit personal information, usage data, or telemetry.
 
-The app communicates exclusively with Roku devices on your local network (LAN) using the Roku External Control Protocol (ECP) on port 8060. It finds them with SSDP multicast and, if that gets no answer, by checking your local subnet for that port. To turn on a TV that is in standby it may send Wake-on-LAN packets, which also stay on your local network. No data is sent to any external server.
+The app communicates directly with Roku devices and Android TV / Google TV devices on your local network. Roku control uses the Roku External Control Protocol (ECP) on port 8060 and local SSDP discovery. Android TV pairing and control use Android TV Remote Service on the local network (pairing port 6467 and control port 6466); the TV displays a code that you enter to authorize this app. No commands are sent to an external server. Roku Wake-on-LAN packets, when used, also stay on your local network.
 
-Stored only on your computer, and never transmitted: the names, IP addresses, models and network hardware (MAC) addresses of your Rokus (so the app can reconnect and wake them), your window preference, and two counters — how long the app has been used and how many commands it has sent — used only to show a one-time invitation to rate the app.
+Stored only on your computer: Roku and Android TV device names, IP addresses, models and Roku network hardware (MAC) addresses; app window preferences; usage counters used only to show a one-time invitation to rate the app; and the Android TV pairing certificate and private key. The pairing key is kept in the app's local application-data folder so the TV can recognize this installation after restart. The key is never sent anywhere except to the Android TV device as part of local TLS pairing and control. Forgetting a TV removes its saved device entry; to revoke a paired certificate, remove Open Remote Control from the TV's Android TV Remote Service paired-device settings.
 
-Links in the app (MoveWeight.com, Source code, Report a problem, Suggest an idea, Rate) open your web browser or the Microsoft Store, and only when you click them. "Report a problem" pre-fills a GitHub issue with the app version, your operating system, and your Roku's model, software version and settings mode — never its IP address, name, serial number or MAC address. Nothing is sent unless you choose to submit it on GitHub.
+Links in the app open your browser or the Microsoft Store only when clicked. A GitHub bug-report link may include the app version, operating system, selected TV family and model, and a redacted error. It never includes an IP address, device name, serial number, MAC address or pairing key. Nothing is sent unless you submit it on GitHub.
 
-This app:
-- Does NOT collect personal information
-- Does NOT use analytics or crash reporting
-- Does NOT contain advertisements
-- Does NOT require an account or login
-- Does NOT access the internet on its own — only Roku devices on your LAN, plus pages you choose to open
-- Only stores device details and usage counters locally, on your computer
+This app does not collect personal information, use analytics or crash reporting, contain advertisements, or require an account or login. It does not access the internet on its own; it talks to selected TVs on your LAN.
 
 If you have questions, contact: me@moveweight.com

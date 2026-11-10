@@ -1,12 +1,12 @@
 [package]
-name = "roku-control"
-version = "2.1.0"
-description = "Roku Remote Control — cross-platform desktop app"
+name = "open-remote-control"
+version = "2.1.2"
+description = "Open Remote Control for Roku, Android TV and Google TV"
 authors = ["Wade"]
 license = "MIT"
 repository = "https://github.com/BlizzHacker/RokuControl"
 edition = "2021"
-rust-version = "1.77.2"
+rust-version = "1.83"
 
 [lib]
 name = "app_lib"
@@ -27,3 +27,4 @@ reqwest = { version = "0.12", default-features = false }
 socket2 = "0.6"
 if-addrs = "0.13"
 base64 = "0.22"
+chromiacast = { version = "=0.3.1", default-features = false, features = ["android-tv"] }

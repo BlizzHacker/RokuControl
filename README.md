@@ -1,131 +1,52 @@
-# Roku Control
+# Open Remote Control
 
-A free desktop remote for Roku TVs and streaming players. Every button on the
-physical remote, your keyboard as a remote, live typing into search boxes,
-channel launching with real channel art, and a Turn on button that can wake a
-TV from standby — in a native window on Windows, macOS or Linux. One Tauri
-(Rust + React) codebase, a binary around 5 MB.
+A free desktop remote for Roku and Android TV / Google TV. It runs on Windows, macOS and Linux, talks directly to TVs on your local network, and needs no account, ads or tracking.
 
-No ads, no accounts, no tracking. The app only ever talks to the Rokus on your
-own network.
+The public repository keeps its historical name, `BlizzHacker/RokuControl`; the Microsoft Store product is branded **Open Remote Control**. Its Store product ID and MSIX package identity are unchanged.
 
-## Get it
+## Supported TVs
 
-- **Microsoft Store** — search for *Roku Control* (Windows).
-- **Installers** — Windows, macOS and Linux downloads are on the
-  [latest release](https://github.com/BlizzHacker/RokuControl/releases/latest).
-- **From source** — any OS:
+- **Roku TVs and players:** automatic network discovery, manual IP setup, Roku-style directional controls, channel and app launching, keyboard typing, input selection, Limited Mode diagnostics, and wake assistance.
+- **Android TV and Google TV:** manual IP pairing with the six-character code shown by Android TV Remote Service, directional controls, Back, Home, playback, volume, mute, standby and wake commands.
+
+Android TV support requires the TV's Android TV Remote Service to be available on the local network. Pairing is approved on the TV itself. The app stores its local pairing identity in its application-data folder so it can reconnect after restart.
+
+## Install from source
 
 ```bash
 git clone https://github.com/BlizzHacker/RokuControl.git
 cd RokuControl
-npm install
+npm ci
 npm run tauri:dev
 ```
 
-That's a live dev build with hot reload. To produce a real installer:
+Build an installer for the current operating system with `npm run tauri:build`. The build workflow creates Windows, macOS and Linux installers and the Microsoft Store MSIX.
 
-```bash
-npm run tauri:build         # current OS
-npm run tauri:build:win     # Windows .msi
-npm run tauri:build:mac     # macOS .dmg
-npm run tauri:build:linux   # Linux .deb + .AppImage
-```
+## Roku notes
 
-Installers land in `src-tauri/target/release/bundle/`.
+Roku OS 14.1 and later can reject key presses when **Settings › System › Advanced system settings › Control by mobile apps** is Limited or disabled. Open Remote Control detects the rejection and shows the fix. For Roku TV wake from a deep sleep, enable **Fast TV start**; Wake-on-LAN only works when the TV's network hardware remains able to receive it.
 
-> Build through `npm run tauri:build`, not `cargo build` directly — the Tauri
-> script builds the web frontend first. A bare cargo build packages an empty
-> frontend and you get a blank window that looks like a broken app.
+## Android TV notes
 
-## What it does
-
-- **Finds your Rokus by itself** on launch — SSDP on every network adapter, and
-  a direct scan of your subnet when multicast is blocked. Add one by IP if you
-  need to. Devices are remembered by serial number, so when your router hands a
-  Roku a new address the app follows it.
-- **Honest status** — the dot next to your Roku reflects a real check every few
-  seconds: connected, screen off, not responding, or Limited mode.
-- **Turn on from off** — sends `PowerOn`, and if the TV has dropped off the
-  network, Wake-on-LAN to every MAC address it has seen for it, then keeps
-  knocking until the TV answers.
-- **Your keyboard is a remote** (see below), with press-and-hold repeat on the
-  arrows and volume.
-- **Live typing** — type into the app and the letters appear in the TV's
-  search box as you type, including accents and symbols. Fix a typo anywhere
-  and the TV follows.
-- **Channels** with their real icons, a filter, and "on now"; **TV inputs** by
-  the names you gave them on the TV.
-- **Mini remote** (📌) — a compact remote that stays on top of other windows.
-- **Straight-to-GitHub feedback** — *Report a problem* and *Suggest an idea*
-  open a pre-filled GitHub issue (Roku model and software version only — never
-  IPs, names or serials). Nothing is sent until you press Submit.
+Choose Android TV / Google TV in **Pair or manage TVs**, enter the TV's IP address, then type the short code displayed on the television. This uses Android TV Remote Service's local encrypted pairing and control connections, not ADB. If a TV does not expose that service, it cannot be paired by this version.
 
 ## Keyboard shortcuts
 
-| Key | Does |
-|-----|------|
-| ↑ ↓ ← → | Move |
+| Key | Action |
+|-----|--------|
+| Arrow keys | Move |
 | Enter | OK |
 | Backspace / Esc | Back |
 | H | Home |
 | Space or P | Play / Pause |
-| `,` / `.` (or `[` / `]`) | Rewind / Fast forward |
-| R | Instant replay |
-| I or `*` | Options |
-| S | Search |
-| `+` / `−` / M | Volume up / down / mute |
-| Page Up / Page Down | Channel up / down |
-| `/` or T | Start typing on the TV (Esc to stop) |
-| `?` | Show all shortcuts |
-
-## If something doesn't work
-
-**Only volume works, or the app says your Roku is blocking it.** Roku OS 14.1
-and later ship in *Limited* mode. On the Roku open
-**Settings › System › Advanced system settings › Control by mobile apps** and
-choose **Enabled** (or set **Network access** to **Permissive**).
-
-**Turn on doesn't wake the TV.** A Roku TV that is fully off switches its
-network off too. Turn on **Settings › System › Power › Fast TV start**.
-
-**No Roku found.** Put the computer on the same network as the Roku (not a
-guest network). On Windows, set that network to *Private*. You can always add a
-Roku by IP — it's under **Settings › Network › About** on the Roku.
-
-Still stuck? Use **Report a problem** in the app, or
-[open an issue](https://github.com/BlizzHacker/RokuControl/issues/new/choose).
-
-## How it works
-
-Roku devices expose the
-[External Control Protocol](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md)
-on port 8060: plain HTTP for keypresses, app launching and device queries. The
-app discovers devices with an SSDP multicast query (`239.255.255.250:1900`) and
-then talks straight to each Roku.
-
-| Layer | Tech |
-|-------|------|
-| Desktop shell | Tauri 2 (Rust) |
-| UI | React 19 + Vite |
-| Networking | reqwest (plain HTTP, no proxy) |
-| Discovery | SSDP multicast + subnet probe |
-| Wake | Wake-on-LAN magic packets |
-
-Run the Rust tests (they include a fake Roku to talk to) with
-`cd src-tauri && cargo test`.
+| `,` / `.` | Rewind / Fast forward |
+| `+` / `−` / M | Volume / Mute |
+| `?` | Show shortcuts |
 
 ## Privacy
 
-Roku Control does not collect or transmit any personal data. All
-communication is strictly between the app and Roku devices on your local
-network. No analytics, no telemetry, no tracking. See [privacy.txt](privacy.txt).
-
-## Credits
-
-Made ad-free by [MoveWeight.com](https://moveweight.com). If the app helps
-you, a rating in the Microsoft Store or a star here is how other people find it.
+Device details and the Android TV pairing identity stay on your computer. The app does not collect telemetry or send commands through a cloud service. See [privacy.txt](privacy.txt).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. Roku, Android TV and Google TV are trademarks of their respective owners. Open Remote Control is independent and unaffiliated.
