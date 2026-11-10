@@ -4,7 +4,7 @@
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
   <Identity Name="MOVEWEIGHT.RokuControl" Version="2.1.2.0" Publisher="CN=6375D74B-5E4F-45B4-B246-B29507C1332A" ProcessorArchitecture="x64" />
   <Properties>
-    <DisplayName>Open Remote Control</DisplayName>
+    <DisplayName>Open Remote Control for PC by Move Weight</DisplayName>
     <PublisherDisplayName>MOVE WEIGHT</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
